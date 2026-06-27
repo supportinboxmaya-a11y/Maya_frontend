@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  body { @apply bg-[#0a0b0f] text-[#e2e8f0] font-sans antialiased; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 9999px; }
+}
+@layer components {
+  .card { @apply bg-[#14161e] border border-[#1e2130] rounded-xl p-4 transition-all; }
+  .card-hover { @apply card hover:border-[#7c6af7]/30; }
+  .btn-primary { @apply bg-[#7c6af7] hover:bg-[#7c6af7]/90 text-white font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm; }
+  .btn-secondary { @apply bg-[#1a1d2e] hover:bg-[#1e2130] border border-[#1e2130] text-[#e2e8f0] font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm; }
+  .btn-ghost { @apply hover:bg-[#1a1d2e] text-[#94a3b8] hover:text-[#e2e8f0] font-medium px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm; }
+  .input { @apply bg-[#1a1d2e] border border-[#1e2130] rounded-lg px-3 py-2 text-sm text-[#e2e8f0] placeholder:text-[#64748b] focus:outline-none focus:border-[#7c6af7]/50 transition-all w-full; }
+  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium; }
+  .sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#1a1d2e] transition-all cursor-pointer; }
+  .sidebar-item-active { @apply sidebar-item bg-[#7c6af7]/10 text-[#a78bfa] border border-[#7c6af7]/20; }
+}
