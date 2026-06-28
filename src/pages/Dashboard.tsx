@@ -10,17 +10,36 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false)
   const fileRef = useRef(null)
   const bottomRef = useRef(null)
-  const chatRef = useRef(null)
-  const barRef = useRef(null)
   const { status } = useAgentStore()
 
   useEffect(()=>{
+    const handler = () => {
+      try { setMessages(JSON.parse(localStorage.getItem('maya_chat')||'[]')) } catch {}
+    }
+    window.addEventListener('maya_chat_changed', handler)
+    return () => window.removeEventListener('maya_chat_changed', handler)
+  }, [])
+
+  useEffect(()=>{
     localStorage.setItem('maya_chat', JSON.stringify(messages))
+    const chatId = localStorage.getItem('maya_active_chat')
+    if (chatId && messages.length>0) {
+      const chats = JSON.parse(localStorage.getItem('maya_chats')||'[]')
+      const updated = chats.map(c=>c.id===chatId?{...c, messages, title:messages[0]?.content?.slice(0,30)||'New Chat'}:c)
+      localStorage.setItem('maya_chats', JSON.stringify(updated))
+    }
     bottomRef.current?.scrollIntoView({behavior:'smooth'})
   }, [messages])
 
   const handleSubmit = async () => {
     if (!input.trim()) return
+    if (!localStorage.getItem('maya_active_chat')) {
+      const id = Date.now().toString()
+      const chat = {id, title:input.slice(0,30), time:new Date().toLocaleTimeString(), messages:[]}
+      const chats = JSON.parse(localStorage.getItem('maya_chats')||'[]')
+      localStorage.setItem('maya_chats', JSON.stringify([chat,...chats]))
+      localStorage.setItem('maya_active_chat', id)
+    }
     const msg = {role:'user', content:input, time:new Date().toLocaleTimeString()}
     setMessages(prev=>[...prev, msg])
     setInput('')
@@ -32,7 +51,7 @@ export function Dashboard() {
 
   return (
     <div style={{display:'flex', flexDirection:'column', height:'calc(100dvh - 3.5rem)'}}>
-      <div ref={chatRef} style={{flex:1, overflowY:'auto', padding:'1.5rem 1rem', minHeight:0}}>
+      <div style={{flex:1, overflowY:'auto', padding:'1.5rem 1rem', minHeight:0}}>
         {messages.length===0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-3xl">M</div>
@@ -65,7 +84,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <div ref={barRef} style={{flexShrink:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
+      <div style={{flexShrink:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
         <div className="bg-[#1e2130] rounded-2xl px-4 py-3 mb-2">
           <input ref={fileRef} type="file" className="hidden" multiple/>
           <input value={input} onChange={e=>setInput(e.target.value)}
