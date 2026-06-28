@@ -1,0 +1,10 @@
+{
+  "name": "Maya 2.0 ULTRA",
+  "short_name": "Maya",
+  "description": "AI Operating System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0b0f",
+  "theme_color": "#7c6af7",
+  "icons": [{"src": "/maya-icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}
