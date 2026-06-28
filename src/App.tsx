@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom"
 import { Layout } from "@/components/layout/Layout"
+import { Auth } from "@/pages/Auth"
 import { Dashboard } from "@/pages/Dashboard"
 import { Chat } from "@/pages/Chat"
 import { Memory } from "@/pages/Memory"
@@ -23,6 +24,7 @@ import { Integrations } from "@/pages/Integrations"
 export default function App() {
   return (
     <Routes>
+      <Route path="/auth" element={<Auth/>}/>
       <Route path="/" element={<Layout/>}>
         <Route index element={<Dashboard/>}/>
         <Route path="chat" element={<Chat/>}/>
