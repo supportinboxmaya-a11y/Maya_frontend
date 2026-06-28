@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import { truncate } from "@/lib/utils"
 import type { Step } from "@/types"
 
-export function StepItem({ step, index }: { step: Step; index: number }) {
+export function StepItem({ step, index = 0 }: { step: Step; index?: number }) {
   return (
     <div className="flex gap-3 mb-4">
       <div className="flex flex-col items-center">
@@ -12,7 +12,7 @@ export function StepItem({ step, index }: { step: Step; index: number }) {
           step.success===false ? "bg-red-500/20 text-red-400" :
           "bg-blue-500/20 text-blue-400 animate-pulse"
         )}>
-          {step.success===true ? "✓" : step.success===false ? "✗" : index+1}
+          {step.success===true ? "v" : step.success===false ? "x" : index+1}
         </div>
         <div className="w-px flex-1 bg-[#1e2130] mt-1"/>
       </div>
