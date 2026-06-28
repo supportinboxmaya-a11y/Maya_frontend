@@ -1,23 +1,31 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAgentStore } from '@/store'
 import { Mic, Plus, Activity } from 'lucide-react'
 
 export function Dashboard() {
   const [input, setInput] = useState('')
   const [files, setFiles] = useState([])
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(()=>{
+    try { return JSON.parse(localStorage.getItem('maya_chat')||'[]') } catch { return [] }
+  })
   const [loading, setLoading] = useState(false)
   const fileRef = useRef(null)
+  const bottomRef = useRef(null)
   const { status } = useAgentStore()
+
+  useEffect(()=>{
+    localStorage.setItem('maya_chat', JSON.stringify(messages))
+    bottomRef.current?.scrollIntoView({behavior:'smooth'})
+  }, [messages])
 
   const handleSubmit = async () => {
     if (!input.trim() && files.length===0) return
-    const msg = {role:'user', content:input}
+    const msg = {role:'user', content:input, time:new Date().toLocaleTimeString()}
     setMessages(prev=>[...prev, msg])
     setInput(''); setFiles([])
     setLoading(true)
     await new Promise(r=>setTimeout(r,1500))
-    setMessages(prev=>[...prev, {role:'assistant', content:'Task received! Working on it now...'}])
+    setMessages(prev=>[...prev, {role:'assistant', content:'Task received! Working on it now...', time:new Date().toLocaleTimeString()}])
     setLoading(false)
   }
 
@@ -31,12 +39,15 @@ export function Dashboard() {
             <p className="text-sm text-slate-400">Agent: <span className="text-purple-400 font-mono">{status}</span></p>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className="max-w-2xl mx-auto space-y-4">
             {messages.map((m,i)=>(
               <div key={i} className={`flex gap-3 ${m.role==='user'?'justify-end':''}`}>
                 {m.role==='assistant' && <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">M</div>}
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${m.role==='user'?'bg-[#2a2d3e] text-white':'text-slate-200'}`}>
-                  {m.content}
+                <div className="flex flex-col">
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${m.role==='user'?'bg-[#2a2d3e] text-white':'text-slate-200'}`}>
+                    {m.content}
+                  </div>
+                  <span className="text-[10px] text-slate-600 mt-1 px-1">{m.time}</span>
                 </div>
               </div>
             ))}
@@ -50,6 +61,7 @@ export function Dashboard() {
                 </div>
               </div>
             )}
+            <div ref={bottomRef}/>
           </div>
         )}
       </div>
