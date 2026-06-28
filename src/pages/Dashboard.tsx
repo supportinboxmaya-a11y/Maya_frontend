@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useTaskStore, useAgentStore } from '@/store'
+import { useAgentStore } from '@/store'
 import { Mic, Plus, Activity } from 'lucide-react'
 
 export function Dashboard() {
@@ -8,7 +8,6 @@ export function Dashboard() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const fileRef = useRef(null)
-  const { tasks } = useTaskStore()
   const { status } = useAgentStore()
 
   const handleSubmit = async () => {
@@ -22,31 +21,14 @@ export function Dashboard() {
     setLoading(false)
   }
 
-  const suggestions = [
-    'Search web for latest AI news',
-    'Write a Python script',
-    'Analyze my data',
-    'Review my code',
-  ]
-
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
       <div className="flex-1 overflow-y-auto px-4 py-6">
         {messages.length===0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-xl mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">M</div>
-              <h1 className="text-2xl font-bold text-white">Maya 2.0 ULTRA</h1>
-              <p className="text-sm text-slate-400 mt-1">Agent: <span className="text-purple-400 font-mono">{status}</span></p>
-            </div>
-            <div className="grid grid-cols-1 gap-2 w-full">
-              {suggestions.map(s=>(
-                <button key={s} onClick={()=>setInput(s)}
-                  className="text-left p-4 rounded-xl border border-[#1e2130] hover:border-purple-500/40 hover:bg-purple-500/5 transition-all text-sm text-slate-300">
-                  {s}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-3xl">M</div>
+            <h1 className="text-2xl font-bold text-white">Maya 2.0 ULTRA</h1>
+            <p className="text-sm text-slate-400">Agent: <span className="text-purple-400 font-mono">{status}</span></p>
           </div>
         ) : (
           <div className="max-w-2xl mx-auto space-y-6">
@@ -74,30 +56,27 @@ export function Dashboard() {
 
       <div className="px-3 pb-4">
         <div className="bg-[#1e2130] rounded-2xl px-4 py-3 mb-2">
+          <input ref={fileRef} type="file" className="hidden" multiple onChange={e=>setFiles(prev=>[...prev,...Array.from(e.target.files||[])])}/>
           <input value={input} onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleSubmit()}}}
             placeholder="Reply to Maya..."
             className="w-full bg-transparent text-white text-sm placeholder:text-slate-500 outline-none"/>
         </div>
         <div className="flex items-center gap-2">
-          <input ref={fileRef} type="file" className="hidden" multiple
-            onChange={e=>setFiles(prev=>[...prev,...Array.from(e.target.files||[])])}/>
           <button onClick={()=>fileRef.current?.click()}
-            className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+            className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400 hover:text-white">
             <Plus className="w-5 h-5"/>
           </button>
           <button className="flex-1 h-9 rounded-full bg-[#1e2130] flex items-center justify-center gap-2 text-sm text-slate-300 font-medium">
             <Activity className="w-4 h-4 text-purple-400"/>
             Maya 2.0 ULTRA
           </button>
-          <button className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+          <button className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400 hover:text-white">
             <Mic className="w-4 h-4"/>
           </button>
           <button onClick={handleSubmit}
             className="w-9 h-9 rounded-full bg-white flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="black" strokeWidth="2.5">
-              <path d="M12 19V5M5 12l7-7 7 7"/>
-            </svg>
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="black" strokeWidth="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
       </div>
