@@ -6,7 +6,7 @@ import { Mic, Plus, Activity } from 'lucide-react'
 export function Dashboard() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState(()=>{
-    try { return JSON.parse(localStorage.getItem('maya_chat')||'[]') } catch { return [] }
+    try { return JSON.parse(localStorage.getItem('maya_chat')||'[]') } catch (e: any) { if(e?.status===401||e?.response?.status===401) return; return [] }
   })
   const [loading, setLoading] = useState(false)
   const fileRef = useRef(null)
@@ -15,7 +15,7 @@ export function Dashboard() {
 
   useEffect(()=>{
     const handler = () => {
-      try { setMessages(JSON.parse(localStorage.getItem('maya_chat')||'[]')) } catch {}
+      try { setMessages(JSON.parse(localStorage.getItem('maya_chat')||'[]')) } catch (e: any) { if(e?.status===401||e?.response?.status===401) return;}
     }
     window.addEventListener('maya_chat_changed', handler)
     return () => window.removeEventListener('maya_chat_changed', handler)
@@ -49,7 +49,7 @@ export function Dashboard() {
       const { agentAPI } = await import('@/lib/api')
       const res = await agentAPI.chat(input)
       setMessages(prev=>[...prev, {role:'assistant', content: res?.reply || res?.message || 'Task received!', time:new Date().toLocaleTimeString()}])
-    } catch {
+    } catch (e: any) { if(e?.status===401||e?.response?.status===401) return;
       setMessages(prev=>[...prev, {role:'assistant', content:'⚠️ Backend offline. Demo mode active.', time:new Date().toLocaleTimeString()}])
     } finally {
       setLoading(false)
