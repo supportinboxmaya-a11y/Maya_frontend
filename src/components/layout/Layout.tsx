@@ -5,11 +5,11 @@ import { CommandPalette } from '@/components/CommandPalette'
 
 export function Layout() {
   return (
-    <div className='flex h-screen bg-[#0a0b0f] overflow-hidden'>
+    <div style={{display:'flex', height:'100dvh', overflow:'hidden', background:'#0a0b0f'}}>
       <Sidebar/>
-      <div className='flex-1 flex flex-col md:ml-60 min-w-0'>
+      <div style={{flex:1, display:'flex', flexDirection:'column', marginLeft:0, minWidth:0}} className='md:ml-60'>
         <TopBar/>
-        <main className='flex-1 overflow-y-auto p-4 md:p-6'>
+        <main style={{flex:1, overflowY:'auto'}}>
           <Outlet/>
         </main>
       </div>
