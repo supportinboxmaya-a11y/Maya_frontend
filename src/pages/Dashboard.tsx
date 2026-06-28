@@ -12,7 +12,7 @@ export function Dashboard() {
 
   const handleSubmit = async () => {
     if (!input.trim() && files.length===0) return
-    const msg = {role:'user', content:input, files:[...files]}
+    const msg = {role:'user', content:input}
     setMessages(prev=>[...prev, msg])
     setInput(''); setFiles([])
     setLoading(true)
@@ -43,7 +43,7 @@ export function Dashboard() {
             {loading && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold">M</div>
-                <div className="flex gap-1 items-center px-4 py-3">
+                <div className="flex gap-1 items-center px-2 py-3">
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
