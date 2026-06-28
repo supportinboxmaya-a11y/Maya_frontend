@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast'
 import { useState, useRef, useEffect } from 'react'
 import { useAgentStore } from '@/store'
 import { Mic, Plus, Activity } from 'lucide-react'
@@ -92,7 +93,14 @@ export function Dashboard() {
 
       <div style={{flexShrink:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
         <div className="bg-[#1e2130] rounded-2xl px-4 py-3 mb-2">
-          <input ref={fileRef} type="file" className="hidden" multiple/>
+          <input ref={fileRef} type="file" className="hidden" multiple
+          onChange={(e) => {
+            const files = e.target.files
+            if (!files || files.length === 0) return
+            const names = Array.from(files).map(f => f.name).join(', ')
+            setMessages(prev=>[...prev, {role:'user', content:`📎 Attached: ${names}`, time:new Date().toLocaleTimeString()}])
+            e.target.value = ''
+          }}/>
           <input value={input} onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleSubmit()}}}
             placeholder="Reply to Maya..."
@@ -105,7 +113,20 @@ export function Dashboard() {
           <button className="flex-1 h-9 rounded-full bg-[#1e2130] flex items-center justify-center gap-2 text-sm text-slate-300 font-medium">
             <Activity className="w-4 h-4 text-purple-400"/>Maya 2.0 ULTRA
           </button>
-          <button className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400">
+          <button
+            onClick={() => {
+              if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                toast.error('Voice not supported in this browser')
+                return
+              }
+              const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+              const rec = new SR()
+              rec.lang = 'en-US'
+              rec.onresult = (e: any) => setInput(e.results[0][0].transcript)
+              rec.onerror = () => toast.error('Microphone error')
+              rec.start()
+            }}
+            className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400 hover:text-purple-400 transition-colors">
             <Mic className="w-4 h-4"/>
           </button>
           <button onClick={handleSubmit} className="w-9 h-9 rounded-full bg-white flex items-center justify-center">
