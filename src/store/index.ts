@@ -1,42 +1,29 @@
-import { create } from 'zustand'
-import type { Task, Notification } from '@/types'
+import { create } from "zustand"
+import type { Notification } from "@/types"
+import { mockNotifications } from "@/lib/mock-data"
 
-interface AgentStore {
-  status: string; currentGoal: string | null
-  setStatus: (s: string) => void; setCurrentGoal: (g: string | null) => void
-}
-export const useAgentStore = create<AgentStore>((set) => ({
-  status: 'idle', currentGoal: null,
-  setStatus: (status) => set({ status }),
-  setCurrentGoal: (currentGoal) => set({ currentGoal }),
+export const useAgentStore = create<{
+  status:string; currentGoal:string|null
+  setStatus:(s:string)=>void; setCurrentGoal:(g:string|null)=>void
+}>((set)=>({
+  status:"idle",currentGoal:null,
+  setStatus:(status)=>set({status}),
+  setCurrentGoal:(currentGoal)=>set({currentGoal}),
 }))
 
-interface TaskStore {
-  tasks: Task[]; activeTaskId: string | null
-  addTask: (t: Task) => void
-  setActiveTask: (id: string | null) => void
-}
-export const useTaskStore = create<TaskStore>((set) => ({
-  tasks: [], activeTaskId: null,
-  addTask: (task) => set((s) => ({ tasks: [task, ...s.tasks] })),
-  setActiveTask: (activeTaskId) => set({ activeTaskId }),
+export const useNotificationStore = create<{
+  notifications:Notification[]; unreadCount:number
+  markAllRead:()=>void; clearAll:()=>void
+}>((set)=>({
+  notifications:mockNotifications,
+  unreadCount:mockNotifications.filter(n=>!n.read).length,
+  markAllRead:()=>set(s=>({notifications:s.notifications.map(n=>({...n,read:true})),unreadCount:0})),
+  clearAll:()=>set({notifications:[],unreadCount:0}),
 }))
 
-interface NotificationStore {
-  notifications: Notification[]; unreadCount: number
-  addNotification: (n: Notification) => void
-  markAllRead: () => void
-}
-export const useNotificationStore = create<NotificationStore>((set) => ({
-  notifications: [], unreadCount: 0,
-  addNotification: (n) => set((s) => ({ notifications: [n, ...s.notifications], unreadCount: s.unreadCount + 1 })),
-  markAllRead: () => set((s) => ({ notifications: s.notifications.map(n => ({...n, read: true})), unreadCount: 0 })),
-}))
-
-interface UIStore {
-  sidebarCollapsed: boolean; toggleSidebar: () => void
-}
-export const useUIStore = create<UIStore>((set) => ({
-  sidebarCollapsed: false,
-  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+export const useUIStore = create<{
+  sidebarCollapsed:boolean; toggleSidebar:()=>void
+}>((set)=>({
+  sidebarCollapsed:false,
+  toggleSidebar:()=>set(s=>({sidebarCollapsed:!s.sidebarCollapsed})),
 }))
