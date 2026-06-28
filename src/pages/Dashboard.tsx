@@ -10,6 +10,8 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false)
   const fileRef = useRef(null)
   const bottomRef = useRef(null)
+  const chatRef = useRef(null)
+  const barRef = useRef(null)
   const { status } = useAgentStore()
 
   useEffect(()=>{
@@ -29,8 +31,8 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{position:'relative', height:'calc(100dvh - 3.5rem)', overflow:'hidden'}}>
-      <div style={{position:'absolute', top:0, left:0, right:0, bottom:'130px', overflowY:'auto', padding:'1.5rem 1rem'}}>
+    <div style={{display:'flex', flexDirection:'column', height:'calc(100dvh - 3.5rem)'}}>
+      <div ref={chatRef} style={{flex:1, overflowY:'auto', padding:'1.5rem 1rem', minHeight:0}}>
         {messages.length===0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-3xl">M</div>
@@ -63,7 +65,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <div style={{position:'absolute', bottom:0, left:0, right:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
+      <div ref={barRef} style={{flexShrink:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
         <div className="bg-[#1e2130] rounded-2xl px-4 py-3 mb-2">
           <input ref={fileRef} type="file" className="hidden" multiple/>
           <input value={input} onChange={e=>setInput(e.target.value)}
