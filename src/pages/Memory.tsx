@@ -1,90 +1,100 @@
-import { useState } from 'react'
-import { mockMemories } from '@/lib/mock-data'
-import { timeAgo } from '@/lib/utils'
-import { Search, Plus, Trash2, Brain, Clock, Database, BookOpen, Cpu, Network } from 'lucide-react'
-import { cn } from '@/lib/utils'
-
-const layers = [
-  {type:"all",label:"All Memory",icon:Brain,color:"text-white"},
-  {type:"short_term",label:"Short-Term",icon:Clock,color:"text-blue-400"},
-  {type:"long_term",label:"Long-Term",icon:Database,color:"text-purple-400"},
-  {type:"episodic",label:"Episodic",icon:BookOpen,color:"text-emerald-400"},
-  {type:"semantic",label:"Semantic",icon:Cpu,color:"text-yellow-400"},
-  {type:"vector",label:"Vector",icon:Network,color:"text-red-400"},
-]
-
-const typeBadge: Record<string,string> = {
-  short_term:"badge-blue",long_term:"badge-purple",episodic:"badge-green",
-  semantic:"badge-yellow",vector:"badge-red",general:"badge-default",
-  chat:"badge-blue",task_episode:"badge-green"
-}
+import { useEffect, useState } from 'react'
+import { memoryAPI } from '@/lib/api'
+import { Loader2, Trash2, Plus, Search } from 'lucide-react'
+import type { Memory } from '@/types'
+import toast from 'react-hot-toast'
 
 export function Memory() {
-  const [activeLayer, setActiveLayer] = useState("all")
-  const [search, setSearch] = useState("")
-  const [memories, setMemories] = useState(mockMemories)
+  const [memories, setMemories] = useState<Memory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [newContent, setNewContent] = useState('')
 
-  const filtered = memories.filter(m=>{
-    const matchLayer = activeLayer==="all" || m.type===activeLayer
-    const matchSearch = !search || m.content.toLowerCase().includes(search.toLowerCase())
-    return matchLayer && matchSearch
-  })
+  const fetchMemories = async () => {
+    setLoading(true)
+    try {
+      const data = await memoryAPI.list({ limit: 50 })
+      setMemories((data as any) || [])
+    } catch { setMemories([]) }
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchMemories() }, [])
+
+  const handleSearch = async () => {
+    if (!query.trim()) return fetchMemories()
+    setLoading(true)
+    try {
+      const data = await memoryAPI.search(query)
+      setMemories((data as any) || [])
+    } catch { toast.error('Search failed') }
+    finally { setLoading(false) }
+  }
+
+  const handleAdd = async () => {
+    if (!newContent.trim()) return
+    try {
+      await memoryAPI.add(newContent)
+      setNewContent(''); setAdding(false)
+      toast.success('Memory added')
+      fetchMemories()
+    } catch { toast.error('Failed to add memory') }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await memoryAPI.delete(id)
+      setMemories(prev => prev.filter(m => m.id !== id))
+      toast.success('Deleted')
+    } catch { toast.error('Delete failed') }
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Memory Center</h1>
-          <p className="text-sm text-slate-400 mt-0.5">5-layer memory system — {memories.length} total</p>
-        </div>
-        <button className="btn-primary"><Plus className="w-4 h-4"/>Add Memory</button>
+        <h1 className="text-lg font-bold text-white">Memory Center</h1>
+        <button onClick={() => setAdding(true)} className="btn-primary"><Plus className="w-4 h-4"/>Add Memory</button>
       </div>
-
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-        {layers.map(layer=>{
-          const count = layer.type==="all" ? memories.length : memories.filter(m=>m.type===layer.type).length
-          return (
-            <div key={layer.type} onClick={()=>setActiveLayer(layer.type)}
-              className={cn("card-hover p-4 cursor-pointer", activeLayer===layer.type && "border-purple-500/40 bg-purple-500/5")}>
-              <layer.icon className={cn("w-5 h-5 mb-2",layer.color)}/>
-              <div className="text-lg font-bold text-white">{count}</div>
-              <div className="text-xs text-slate-400 mt-0.5">{layer.label}</div>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/>
-        <input value={search} onChange={e=>setSearch(e.target.value)}
-          placeholder="Search memories..." className="input pl-9"/>
-      </div>
-
-      <div className="space-y-3">
-        {filtered.length===0 && (
-          <div className="text-center py-12 text-slate-500">
-            <Brain className="w-10 h-10 mx-auto mb-3 opacity-30"/>
-            <p>No memories found</p>
+      {adding && (
+        <div className="card p-4 space-y-3">
+          <textarea value={newContent} onChange={e => setNewContent(e.target.value)}
+            placeholder="Memory content..." rows={3}
+            className="input w-full resize-none"/>
+          <div className="flex gap-2">
+            <button onClick={handleAdd} className="btn-primary">Save</button>
+            <button onClick={() => setAdding(false)} className="btn-secondary">Cancel</button>
           </div>
-        )}
-        {filtered.map(mem=>(
-          <div key={mem.id} className="card-hover p-4">
-            <div className="flex items-start justify-between gap-3">
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input value={query} onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          placeholder="Search memories..." className="input flex-1"/>
+        <button onClick={handleSearch} className="btn-secondary px-3"><Search className="w-4 h-4"/></button>
+      </div>
+      {loading ? (
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
+      ) : memories.length === 0 ? (
+        <div className="text-center text-slate-500 py-20">No memories found</div>
+      ) : (
+        <div className="space-y-2">
+          {memories.map(m => (
+            <div key={m.id} className="card p-4 flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white leading-relaxed">{mem.content}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={cn("badge", typeBadge[mem.type]||"badge-default")}>{mem.type}</span>
-                  <span className="text-xs text-slate-500">{timeAgo(mem.timestamp)}</span>
+                <div className="text-sm text-white">{m.content}</div>
+                <div className="flex gap-2 mt-2">
+                  <span className="badge badge-purple text-[10px]">{m.type}</span>
+                  <span className="text-[10px] text-slate-600">{new Date(m.timestamp).toLocaleDateString()}</span>
                 </div>
               </div>
-              <button onClick={()=>setMemories(prev=>prev.filter(m=>m.id!==mem.id))}
-                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 opacity-60 hover:opacity-100 transition-all">
-                <Trash2 className="w-3.5 h-3.5"/>
+              <button onClick={() => handleDelete(m.id)} className="text-slate-600 hover:text-red-400 transition-colors flex-shrink-0">
+                <Trash2 className="w-4 h-4"/>
               </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

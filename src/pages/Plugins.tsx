@@ -1,85 +1,75 @@
-import { useState } from 'react'
-import { mockPlugins } from '@/lib/mock-data'
-import { Search, Download, Trash2, ToggleLeft, ToggleRight, Star, Package, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { api } from '@/lib/api'
+import { Loader2, Download, Power } from 'lucide-react'
+import type { Plugin } from '@/types'
+import toast from 'react-hot-toast'
 
 export function Plugins() {
-  const [plugins, setPlugins] = useState(mockPlugins)
-  const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState("all")
+  const [plugins, setPlugins] = useState<Plugin[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = plugins.filter(p=>{
-    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter==="all" || (filter==="installed"?p.installed:!p.installed)
-    return matchSearch && matchFilter
-  })
+  useEffect(() => {
+    api.get('/plugins').then((data: any) => setPlugins(data || []))
+      .catch(() => setPlugins([]))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const toggle = (id:string) => setPlugins(prev=>prev.map(p=>p.id===id?{...p,enabled:!p.enabled}:p))
-  const install = (id:string) => setPlugins(prev=>prev.map(p=>p.id===id?{...p,installed:true,enabled:true}:p))
-  const uninstall = (id:string) => setPlugins(prev=>prev.map(p=>p.id===id?{...p,installed:false,enabled:false}:p))
+  const togglePlugin = async (plugin: Plugin) => {
+    try {
+      await api.put(`/plugins/${plugin.id}`, { enabled: !plugin.enabled })
+      setPlugins(prev => prev.map(p => p.id === plugin.id ? {...p, enabled: !p.enabled} : p))
+      toast.success(`${plugin.name} ${!plugin.enabled ? 'enabled' : 'disabled'}`)
+    } catch { toast.error('Failed to update plugin') }
+  }
+
+  const installPlugin = async (plugin: Plugin) => {
+    try {
+      await api.post(`/plugins/${plugin.id}/install`, {})
+      setPlugins(prev => prev.map(p => p.id === plugin.id ? {...p, installed: true} : p))
+      toast.success(`${plugin.name} installed`)
+    } catch { toast.error('Install failed') }
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Plugin Marketplace</h1>
-          <p className="text-sm text-slate-400 mt-0.5">{plugins.filter(p=>p.installed).length} installed · {plugins.length} available</p>
-        </div>
-        <button className="btn-primary"><Plus className="w-4 h-4"/>Create Plugin</button>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search plugins..." className="input pl-9 w-64"/>
-        </div>
-        <div className="flex gap-1">
-          {["all","installed","available"].map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all",filter===f?"bg-purple-500 text-white":"hover:bg-[#1a1d2e] text-slate-400")}>{f}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filtered.map(plugin=>(
-          <div key={plugin.id} className="card-hover p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-purple-400"/>
-                </div>
+    <div className="p-6 space-y-4">
+      <h1 className="text-lg font-bold text-white">Plugin Marketplace</h1>
+      {loading ? (
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
+      ) : plugins.length === 0 ? (
+        <div className="text-center text-slate-500 py-20">⚠️ No plugins available — backend offline</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {plugins.map(plugin => (
+            <div key={plugin.id} className="card p-4 space-y-3">
+              <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm font-semibold text-white">{plugin.name}</div>
-                  <div className="text-xs text-slate-500">v{plugin.version} · {plugin.author}</div>
+                  <div className="text-xs text-slate-500">{plugin.author} • v{plugin.version}</div>
                 </div>
+                <span className="badge badge-default text-[10px]">{plugin.category}</span>
               </div>
-              {plugin.installed && (
-                <button onClick={()=>toggle(plugin.id)}>
-                  {plugin.enabled ? <ToggleRight className="w-5 h-5 text-emerald-400"/> : <ToggleLeft className="w-5 h-5 text-slate-500"/>}
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mb-3">{plugin.description}</p>
-            <div className="flex flex-wrap gap-1 mb-3">
-              {plugin.tools.map(t=><span key={t} className="badge-purple font-mono text-[10px]">{t}</span>)}
-            </div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1 text-xs text-yellow-400"><Star className="w-3 h-3 fill-current"/>{plugin.rating}</div>
-              <div className="text-xs text-slate-500">{plugin.downloads.toLocaleString()} downloads</div>
-            </div>
-            <div className="pt-3 border-t border-[#1e2130]">
-              {plugin.installed ? (
+              <div className="text-xs text-slate-400">{plugin.description}</div>
+              <div className="flex items-center justify-between">
                 <div className="flex gap-2">
-                  <span className="badge-green flex-1 justify-center">Installed</span>
-                  <button onClick={()=>uninstall(plugin.id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400"><Trash2 className="w-3.5 h-3.5"/></button>
+                  <span className="text-xs text-yellow-400">★ {plugin.rating}</span>
+                  <span className="text-xs text-slate-600">{plugin.downloads} downloads</span>
                 </div>
-              ) : (
-                <button onClick={()=>install(plugin.id)} className="btn-secondary w-full justify-center"><Download className="w-3.5 h-3.5"/>Install</button>
-              )}
+                {plugin.installed ? (
+                  <button onClick={() => togglePlugin(plugin)}
+                    className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${plugin.enabled ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                    <Power className="w-3 h-3"/>{plugin.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                ) : (
+                  <button onClick={() => installPlugin(plugin)}
+                    className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors">
+                    <Download className="w-3 h-3"/>Install
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -106,7 +106,5 @@ export function createWebSocket(onMessage: (data: unknown) => void) {
     catch { console.error("WS parse error", e.data) }
   }
 
-  ws.onerror = (e) => console.error("WebSocket error", e)
-
   return ws
 }
