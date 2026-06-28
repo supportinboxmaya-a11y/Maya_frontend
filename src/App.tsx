@@ -22,7 +22,7 @@ import { Backup } from '@/pages/Backup'
 import { Integrations } from '@/pages/Integrations'
 
 function PrivateRoute({ children }) {
-  const auth = localStorage.getItem('maya_auth')
+  const auth = localStorage.getItem('maya_token')
   if (!auth) return <Navigate to='/auth' replace/>
   return children
 }

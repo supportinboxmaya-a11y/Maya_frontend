@@ -44,9 +44,15 @@ export function Dashboard() {
     setMessages(prev=>[...prev, msg])
     setInput('')
     setLoading(true)
-    await new Promise(r=>setTimeout(r,1500))
-    setMessages(prev=>[...prev, {role:'assistant', content:'Task received! Working on it now...', time:new Date().toLocaleTimeString()}])
-    setLoading(false)
+    try {
+      const { agentAPI } = await import('@/lib/api')
+      const res = await agentAPI.chat(input)
+      setMessages(prev=>[...prev, {role:'assistant', content: res?.reply || res?.message || 'Task received!', time:new Date().toLocaleTimeString()}])
+    } catch {
+      setMessages(prev=>[...prev, {role:'assistant', content:'⚠️ Backend offline. Demo mode active.', time:new Date().toLocaleTimeString()}])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

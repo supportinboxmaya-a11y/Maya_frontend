@@ -38,8 +38,8 @@ const navSections = [
 
 export function Sidebar() {
   const [open, setOpen] = useState(false)
-  const [chats, setChats] = useState([])
-  const [activeChat, setActiveChat] = useState(null)
+  const [chats, setChats] = useState<{id:string;title:string;time:string;messages:unknown[]}[]>([])
+  const [activeChat, setActiveChat] = useState<string|null>(null)
   const navigate = useNavigate()
 
   useEffect(()=>{
@@ -62,7 +62,7 @@ export function Sidebar() {
     navigate('/')
   }
 
-  const deleteChat = (id, e) => {
+  const deleteChat = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     const updated = chats.filter(c=>c.id!==id)
     setChats(updated)

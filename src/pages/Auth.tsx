@@ -13,7 +13,7 @@ export function Auth() {
     if (!email || !password) { setError('Email and password required'); return }
     setLoading(true); setError('')
     await new Promise(r=>setTimeout(r,1000))
-    localStorage.setItem('maya_auth', JSON.stringify({email, loggedIn:true}))
+    localStorage.setItem('maya_token', JSON.stringify({email, loggedIn:true}))
     navigate('/')
   }
 

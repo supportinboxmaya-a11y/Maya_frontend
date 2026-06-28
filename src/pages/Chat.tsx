@@ -1,19 +1,40 @@
 import { useState } from 'react'
 import { useTaskStore } from '@/store'
+import { taskAPI } from '@/lib/api'
 import { Send, Loader2, ArrowLeft } from 'lucide-react'
 import { StepItem } from '@/components/chat/StepItem'
+import toast from 'react-hot-toast'
 
 export function Chat() {
-  const { tasks, activeTaskId, setActiveTask } = useTaskStore()
+  const { tasks, activeTaskId, setActiveTask, addTask, updateTask } = useTaskStore()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const activeTask = tasks.find(t=>t.id===activeTaskId)
+
   const handleSubmit = async () => {
     if (!input.trim()) return
     setLoading(true)
-    await new Promise(r=>setTimeout(r,1000))
-    setLoading(false); setInput('')
+    try {
+      const task = await taskAPI.create(input.trim())
+      addTask(task)
+      setActiveTask(task.id)
+      setInput('')
+      const poll = setInterval(async () => {
+        try {
+          const updated = await taskAPI.get(task.id)
+          updateTask(task.id, updated)
+          if (updated.status === 'done' || updated.status === 'failed') {
+            clearInterval(poll)
+            setLoading(false)
+          }
+        } catch { clearInterval(poll); setLoading(false) }
+      }, 2000)
+    } catch {
+      toast.error('Failed to create task')
+      setLoading(false)
+    }
   }
+
   return (
     <div className="h-[calc(100vh-8rem)]">
       {!activeTask ? (
