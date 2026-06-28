@@ -2,34 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  height: 100%;
+}
+
 @layer base {
-  body { @apply bg-[#0a0b0f] text-[#e2e8f0] font-sans antialiased; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0f1117; }
-  ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  body { @apply bg-[#0a0b0f]; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-slate-600; }
 }
 
 @layer components {
-  .card { @apply bg-[#14161e] border border-[#1e2130] rounded-xl p-4 transition-all duration-200; }
-  .card-hover { @apply card hover:border-purple-500/30 hover:shadow-lg cursor-pointer; }
-  .btn-primary { @apply bg-purple-600 hover:bg-purple-500 text-white font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm disabled:opacity-50; }
-  .btn-secondary { @apply bg-[#1a1d2e] hover:bg-[#1e2130] border border-[#1e2130] text-[#e2e8f0] font-medium px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm; }
-  .btn-ghost { @apply hover:bg-[#1a1d2e] text-[#94a3b8] hover:text-[#e2e8f0] font-medium px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm; }
-  .input { @apply bg-[#1a1d2e] border border-[#1e2130] rounded-lg px-3 py-2 text-sm text-[#e2e8f0] placeholder:text-[#64748b] focus:outline-none focus:border-purple-500/50 transition-all w-full; }
-  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium; }
-  .badge-purple { @apply badge bg-purple-500/15 text-purple-400 border border-purple-500/20; }
-  .badge-blue { @apply badge bg-blue-500/15 text-blue-400 border border-blue-500/20; }
-  .badge-green { @apply badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/20; }
-  .badge-red { @apply badge bg-red-500/15 text-red-400 border border-red-500/20; }
-  .badge-yellow { @apply badge bg-yellow-500/15 text-yellow-400 border border-yellow-500/20; }
-  .badge-default { @apply badge bg-[#1a1d2e] text-[#94a3b8] border border-[#1e2130]; }
-  .sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[#1a1d2e] transition-all cursor-pointer; }
-  .sidebar-item-active { @apply sidebar-item bg-purple-500/10 text-purple-400 border border-purple-500/20; }
-  .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+  .card { @apply bg-[#14161e] border border-[#1e2130] rounded-xl; }
+  .card-hover { @apply card hover:border-slate-600 transition-all duration-200; }
+  .btn-primary { @apply flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors; }
+  .btn-secondary { @apply flex items-center gap-2 px-4 py-2 bg-[#1a1d2e] hover:bg-[#1e2130] text-slate-300 text-sm font-medium rounded-lg transition-colors border border-[#1e2130]; }
+  .input { @apply w-full bg-[#14161e] border border-[#1e2130] rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-purple-500/50 transition-colors; }
+  .sidebar-item { @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-[#1a1d2e] transition-all cursor-pointer; }
+  .sidebar-item-active { @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white bg-purple-500/15 border border-purple-500/20 cursor-pointer; }
+  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
+  .badge-default { @apply badge bg-slate-700/50 text-slate-400; }
+  .badge-green { @apply badge bg-emerald-500/15 text-emerald-400; }
+  .badge-blue { @apply badge bg-blue-500/15 text-blue-400; }
+  .badge-red { @apply badge bg-red-500/15 text-red-400; }
+  .badge-yellow { @apply badge bg-yellow-500/15 text-yellow-400; }
+  .badge-purple { @apply badge bg-purple-500/15 text-purple-400; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+@layer utilities {
+  .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 }
