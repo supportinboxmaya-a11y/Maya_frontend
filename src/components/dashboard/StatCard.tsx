@@ -5,12 +5,12 @@ interface StatCardProps {
   value: string | number
   icon: React.ElementType
   color: string
-  bg: string
+  bg?: string
   badge?: string
   onClick?: () => void
 }
 
-export function StatCard({ label, value, icon: Icon, color, bg, badge, onClick }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, color, bg = "bg-[#1a1d2e]", badge, onClick }: StatCardProps) {
   return (
     <div className="card-hover p-5 cursor-pointer" onClick={onClick}>
       <div className="flex items-start justify-between mb-3">
