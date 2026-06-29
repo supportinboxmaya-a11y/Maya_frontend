@@ -7,3 +7,4 @@ Professional AI Operating System — React + Vite + TailwindCSS
 npm install
 npm run dev
 ```
+<!-- deploy -->
