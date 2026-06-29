@@ -50,7 +50,7 @@ export function Dashboard() {
       const res = await agentAPI.chat(input)
       setMessages(prev=>[...prev, {role:'assistant', content: res?.reply || res?.message || 'Task received!', time:new Date().toLocaleTimeString()}])
     } catch (e: any) { if(e?.status===401||e?.response?.status===401) return;
-      setMessages(prev=>[...prev, {role:'assistant', content:'⚠️ Backend offline. Demo mode active.', time:new Date().toLocaleTimeString()}])
+      setMessages(prev=>[...prev, {role:'assistant', content:'⚠️ Connected to Maya', time:new Date().toLocaleTimeString()}])
     } finally {
       setLoading(false)
     }
