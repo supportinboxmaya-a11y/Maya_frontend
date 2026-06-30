@@ -5,17 +5,17 @@ import { Mic, Plus, Activity } from 'lucide-react'
 
 export function Dashboard() {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState(()=>{
-    try { return JSON.parse(localStorage.getItem('maya_chat')||'[]') } catch (e: any) { if(e?.status===401||e?.response?.status===401) return; return [] }
+  const [messages, setMessages] = useState<any[]>(()=>{
+    try { return JSON.parse(localStorage.getItem('maya_chat')||'[]') } catch { return [] }
   })
   const [loading, setLoading] = useState(false)
-  const fileRef = useRef(null)
-  const bottomRef = useRef(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const { status } = useAgentStore()
 
   useEffect(()=>{
     const handler = () => {
-      try { setMessages(JSON.parse(localStorage.getItem('maya_chat')||'[]')) } catch (e: any) { if(e?.status===401||e?.response?.status===401) return;}
+      try { setMessages(JSON.parse(localStorage.getItem('maya_chat')||'[]')) } catch {}
     }
     window.addEventListener('maya_chat_changed', handler)
     return () => window.removeEventListener('maya_chat_changed', handler)
@@ -26,7 +26,7 @@ export function Dashboard() {
     const chatId = localStorage.getItem('maya_active_chat')
     if (chatId && messages.length>0) {
       const chats = JSON.parse(localStorage.getItem('maya_chats')||'[]')
-      const updated = chats.map(c=>c.id===chatId?{...c, messages, title:messages[0]?.content?.slice(0,30)||'New Chat'}:c)
+      const updated = chats.map((c: any)=>c.id===chatId?{...c, messages, title:messages[0]?.content?.slice(0,30)||'New Chat'}:c)
       localStorage.setItem('maya_chats', JSON.stringify(updated))
     }
     bottomRef.current?.scrollIntoView({behavior:'smooth'})
@@ -43,14 +43,26 @@ export function Dashboard() {
     }
     const msg = {role:'user', content:input, time:new Date().toLocaleTimeString()}
     setMessages(prev=>[...prev, msg])
+    const currentInput = input
     setInput('')
     setLoading(true)
     try {
       const { agentAPI } = await import('@/lib/api')
-      const res = await agentAPI.chat(input)
-      setMessages(prev=>[...prev, {role:'assistant', content: res?.reply || res?.message || 'Task received!', time:new Date().toLocaleTimeString()}])
-    } catch (e: any) { if(e?.status===401||e?.response?.status===401) return;
-      setMessages(prev=>[...prev, {role:'assistant', content:'⚠️ Connected to Maya', time:new Date().toLocaleTimeString()}])
+      const res: any = await agentAPI.chat(currentInput)
+      const reply = res?.reply || res?.message || res?.result || 'No response received.'
+      setMessages(prev=>[...prev, {role:'assistant', content: reply, time:new Date().toLocaleTimeString()}])
+    } catch (e: any) {
+      // Show the REAL error so problems are visible, not hidden
+      const status = e?.status || e?.response?.status
+      let errMsg = ''
+      if (status === 401) {
+        errMsg = '🔒 Session expired. Please log in again.'
+        localStorage.removeItem('maya_token')
+        setTimeout(()=>{ window.location.href = '/auth' }, 1500)
+      } else {
+        errMsg = '⚠️ ' + (e?.error || e?.response?.data?.error || e?.message || 'Request failed. Please try again.')
+      }
+      setMessages(prev=>[...prev, {role:'assistant', content: errMsg, time:new Date().toLocaleTimeString()}])
     } finally {
       setLoading(false)
     }
