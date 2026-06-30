@@ -12,9 +12,16 @@ export function Auth() {
     e.preventDefault()
     if (!email || !password) { setError('Email and password required'); return }
     setLoading(true); setError('')
-    await new Promise(r=>setTimeout(r,1000))
-    localStorage.setItem('maya_token', JSON.stringify({email, loggedIn:true}))
-    navigate('/')
+    try {
+      const { authAPI } = await import('@/lib/api')
+      const res: any = await authAPI.login(email, password)
+      localStorage.setItem('maya_token', res.access_token)
+      navigate('/')
+    } catch (err: any) {
+      setError(err?.error || err?.message || 'Login failed. Check email/password.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
