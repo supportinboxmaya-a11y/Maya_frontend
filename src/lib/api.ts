@@ -1,21 +1,25 @@
 import axios from "axios"
 
-const BASE_URL = import.meta.env.VITE_API_URL || "https://maya-brain-api2.supportinbox-maya.workers.dev"
+// ── Two-backend architecture ───────────────────
+// AGENT (Render, Python): auth + agent + tasks + memory + tools +
+//   workflows + analytics + logs + backup + plugins + vision + voice
+// WORKER (Cloudflare): edge/light work (quick chat, D1/KV)
+const AGENT_URL = import.meta.env.VITE_AGENT_URL || "https://m-2-0.onrender.com/api/v1"
+const WORKER_URL = import.meta.env.VITE_API_URL || "https://maya-brain-api2.supportinbox-maya.workers.dev"
 
+// Primary client -> Render backend (all pages use this)
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: AGENT_URL,
   timeout: 60000,
   headers: { "Content-Type": "application/json" },
 })
 
-// Auth token interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("maya_token")
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// Response interceptor
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
@@ -27,7 +31,25 @@ api.interceptors.response.use(
   }
 )
 
-// ── Agent ──────────────────────────────────────
+// Secondary client -> Cloudflare Worker (edge / quick tasks)
+export const workerApi = axios.create({
+  baseURL: WORKER_URL,
+  timeout: 30000,
+  headers: { "Content-Type": "application/json" },
+})
+
+workerApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("worker_token")
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+workerApi.interceptors.response.use(
+  (res) => res.data,
+  (err) => Promise.reject(err.response?.data || err.message)
+)
+
+// ── Agent (Render) ─────────────────────────────
 export const agentAPI = {
   run: (goal: string, budget_usd?: number) =>
     api.post("/agent/run", { goal, budget_usd }),
@@ -36,6 +58,13 @@ export const agentAPI = {
   think: (problem: string, depth = "normal") =>
     api.post("/agent/think", { problem, depth }),
   status: () => api.get("/agent/status"),
+}
+
+// ── Worker (edge) ──────────────────────────────
+export const workerAPI = {
+  chat: (message: string) =>
+    workerApi.post("/agent/chat", { message }),
+  health: () => workerApi.get("/health"),
 }
 
 // ── Tasks ──────────────────────────────────────
@@ -69,6 +98,13 @@ export const toolAPI = {
   logs: (limit = 50) => api.get("/tools/logs", { params: { limit } }),
 }
 
+// ── Providers (LLM key control) ────────────────
+export const providerAPI = {
+  list: () => api.get("/providers"),
+  update: (id: string, enabled: boolean) =>
+    api.put(`/providers/${id}`, { enabled }),
+}
+
 // ── Workflows ──────────────────────────────────
 export const workflowAPI = {
   list: () => api.get("/workflows"),
@@ -86,7 +122,7 @@ export const analyticsAPI = {
   tools: () => api.get("/analytics/tools"),
 }
 
-// ── Auth ───────────────────────────────────────
+// ── Auth (Render issues the token) ─────────────
 export const authAPI = {
   login: (email: string, password: string) =>
     api.post("/auth/login", { email, password }),
