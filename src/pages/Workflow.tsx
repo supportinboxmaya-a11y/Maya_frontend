@@ -8,6 +8,19 @@ export function Workflow() {
   const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState<string|null>(null)
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+
+  const createWorkflow = async () => {
+    if (!name.trim()) return toast.error('Workflow name is required')
+    try {
+      await workflowAPI.create({ name: name.trim(), description: description.trim(), nodes: [], edges: [] })
+      toast.success('Workflow created')
+      setName(''); setDescription(''); setCreating(false)
+      fetchWorkflows()
+    } catch { toast.error('Failed to create workflow') }
+  }
 
   const fetchWorkflows = async () => {
     setLoading(true)
@@ -41,8 +54,21 @@ export function Workflow() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-white">Workflow Builder</h1>
-        <button className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>
+        <button onClick={() => setCreating(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>
       </div>
+      {creating && (
+        <div className="card p-4 space-y-2">
+          <input value={name} onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && createWorkflow()}
+            placeholder="Workflow name (used as the run goal)..." className="input"/>
+          <input value={description} onChange={e => setDescription(e.target.value)}
+            placeholder="Description (optional)..." className="input"/>
+          <div className="flex gap-2">
+            <button onClick={createWorkflow} className="btn-primary">Create Workflow</button>
+            <button onClick={() => setCreating(false)} className="btn-secondary">Cancel</button>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
       ) : workflows.length === 0 ? (

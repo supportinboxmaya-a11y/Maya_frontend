@@ -105,13 +105,38 @@ export function Dashboard() {
 
       <div style={{flexShrink:0, padding:'0 0.75rem 1rem', background:'#0a0b0f'}}>
         <div className="bg-[#1e2130] rounded-2xl px-4 py-3 mb-2">
-          <input ref={fileRef} type="file" className="hidden" multiple
-          onChange={(e) => {
-            const files = e.target.files
-            if (!files || files.length === 0) return
-            const names = Array.from(files).map(f => f.name).join(', ')
-            setMessages(prev=>[...prev, {role:'user', content:`📎 Attached: ${names}`, time:new Date().toLocaleTimeString()}])
+          <input ref={fileRef} type="file" className="hidden" accept="image/*,.txt,.md,.csv,.json,.log"
+          onChange={async (e) => {
+            const file = e.target.files?.[0]
             e.target.value = ''
+            if (!file) return
+            const now = () => new Date().toLocaleTimeString()
+            const { api } = await import('@/lib/api')
+            if (file.type.startsWith('image/')) {
+              setMessages(prev=>[...prev, {role:'user', content:`🖼️ ${file.name}`, time:now()}])
+              setLoading(true)
+              const reader = new FileReader()
+              reader.onload = async ev => {
+                try {
+                  const res: any = await api.post('/vision/analyze', { image: ev.target?.result, prompt: 'Describe this image' })
+                  setMessages(prev=>[...prev, {role:'assistant', content: res?.result || 'No analysis returned.', time:now()}])
+                } catch (err: any) {
+                  setMessages(prev=>[...prev, {role:'assistant', content: '⚠️ ' + (err?.detail || err?.error || 'Vision analysis failed'), time:now()}])
+                } finally { setLoading(false) }
+              }
+              reader.readAsDataURL(file)
+            } else {
+              if (file.size > 100 * 1024) return toast.error('Text files up to 100KB are supported')
+              const text = await file.text()
+              setMessages(prev=>[...prev, {role:'user', content:`📎 ${file.name}`, time:now()}])
+              setLoading(true)
+              try {
+                const res: any = await api.post('/agent/chat', { message: `The user attached a file named "${file.name}". Its content:\n\n${text}\n\nSummarize or respond to it.` })
+                setMessages(prev=>[...prev, {role:'assistant', content: res?.reply || 'No response.', time:now()}])
+              } catch (err: any) {
+                setMessages(prev=>[...prev, {role:'assistant', content: '⚠️ ' + (err?.detail || err?.error || 'Failed to send file'), time:now()}])
+              } finally { setLoading(false) }
+            }
           }}/>
           <input value={input} onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();handleSubmit()}}}
@@ -122,9 +147,9 @@ export function Dashboard() {
           <button onClick={()=>fileRef.current?.click()} className="w-9 h-9 rounded-full bg-[#1e2130] flex items-center justify-center text-slate-400">
             <Plus className="w-5 h-5"/>
           </button>
-          <button className="flex-1 h-9 rounded-full bg-[#1e2130] flex items-center justify-center gap-2 text-sm text-slate-300 font-medium">
+          <div className="flex-1 h-9 rounded-full bg-[#1e2130] flex items-center justify-center gap-2 text-sm text-slate-300 font-medium select-none">
             <Activity className="w-4 h-4 text-purple-400"/>Maya 2.0 ULTRA
-          </button>
+          </div>
           <button
             onClick={() => {
               if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {

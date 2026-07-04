@@ -1,8 +1,15 @@
 export default {
-  dashboard:"Dashboard", tasks:"Tasks", memory:"Memory Center",
+  dashboard:"Dashboard", chat:"Chat / Tasks", memory:"Memory Center",
   tools:"Tool Manager", analytics:"Analytics", cost:"Cost & Budget",
   workflow:"Workflow Builder", plugins:"Plugin Marketplace",
+  agents:"Agent Command", learning:"Learning Center",
   voice:"Voice Studio", vision:"Vision Studio",
-  settings:"Settings", notifications:"Notifications",
+  backendOverview:"Backend Overview", logs:"Logs",
   team:"Team Workspace", security:"Security Center",
+  testing:"Testing Console", backup:"Backup & Restore", integrations:"Integrations",
+  settings:"Settings", notifications:"Notifications",
+  sectionCore:"Core", sectionBuild:"Build", sectionIntelligence:"Intelligence",
+  sectionAiStudio:"AI Studio", sectionBackend:"Backend",
+  sectionEnterprise:"Enterprise", sectionSystem:"System",
+  newChat:"New Chat", recentChats:"Recent Chats",
 }

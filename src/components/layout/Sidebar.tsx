@@ -1,38 +1,43 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard,MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Menu,Plus,Trash2,LogOut } from 'lucide-react'
+import { MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Menu,Plus,Trash2,LogOut,Bot,GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 
 const navSections = [
-  {label:'Core',items:[
-    {to:'/chat',icon:MessageSquare,label:'Chat / Tasks'},
-    {to:'/memory',icon:Brain,label:'Memory Center'},
-    {to:'/tools',icon:Wrench,label:'Tool Manager'},
-    {to:'/analytics',icon:BarChart3,label:'Analytics'},
-    {to:'/cost',icon:DollarSign,label:'Cost & Budget'},
+  {label:'sectionCore',items:[
+    {to:'/chat',icon:MessageSquare,label:'chat'},
+    {to:'/memory',icon:Brain,label:'memory'},
+    {to:'/tools',icon:Wrench,label:'tools'},
+    {to:'/analytics',icon:BarChart3,label:'analytics'},
+    {to:'/cost',icon:DollarSign,label:'cost'},
   ]},
-  {label:'Build',items:[
-    {to:'/workflow',icon:GitBranch,label:'Workflow Builder'},
-    {to:'/plugins',icon:Puzzle,label:'Plugin Marketplace'},
+  {label:'sectionBuild',items:[
+    {to:'/workflow',icon:GitBranch,label:'workflow'},
+    {to:'/plugins',icon:Puzzle,label:'plugins'},
   ]},
-  {label:'AI Studio',items:[
-    {to:'/voice',icon:Mic,label:'Voice Studio'},
-    {to:'/vision',icon:Eye,label:'Vision Studio'},
+  {label:'sectionIntelligence',items:[
+    {to:'/agents',icon:Bot,label:'agents'},
+    {to:'/learning',icon:GraduationCap,label:'learning'},
   ]},
-  {label:'Backend',items:[
-    {to:'/backend/overview',icon:Activity,label:'Backend Overview'},
-    {to:'/backend/logs',icon:Terminal,label:'Logs'},
+  {label:'sectionAiStudio',items:[
+    {to:'/voice',icon:Mic,label:'voice'},
+    {to:'/vision',icon:Eye,label:'vision'},
   ]},
-  {label:'Enterprise',items:[
-    {to:'/team',icon:Users,label:'Team Workspace'},
-    {to:'/security',icon:Shield,label:'Security Center'},
-    {to:'/testing',icon:TestTube,label:'Testing Console'},
-    {to:'/backup',icon:ArchiveRestore,label:'Backup & Restore'},
-    {to:'/integrations',icon:Globe,label:'Integrations'},
+  {label:'sectionBackend',items:[
+    {to:'/backend/overview',icon:Activity,label:'backendOverview'},
+    {to:'/backend/logs',icon:Terminal,label:'logs'},
   ]},
-  {label:'System',items:[
-    {to:'/notifications',icon:Bell,label:'Notifications'},
-    {to:'/settings',icon:Settings,label:'Settings'},
+  {label:'sectionEnterprise',items:[
+    {to:'/team',icon:Users,label:'team'},
+    {to:'/security',icon:Shield,label:'security'},
+    {to:'/testing',icon:TestTube,label:'testing'},
+    {to:'/backup',icon:ArchiveRestore,label:'backup'},
+    {to:'/integrations',icon:Globe,label:'integrations'},
+  ]},
+  {label:'sectionSystem',items:[
+    {to:'/notifications',icon:Bell,label:'notifications'},
+    {to:'/settings',icon:Settings,label:'settings'},
   ]},
 ]
 
@@ -41,6 +46,7 @@ export function Sidebar() {
   const [chats, setChats] = useState<{id:string;title:string;time:string;messages:unknown[]}[]>([])
   const [activeChat, setActiveChat] = useState<string|null>(null)
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   useEffect(()=>{
     const stored = JSON.parse(localStorage.getItem('maya_chats')||'[]')
@@ -83,8 +89,12 @@ export function Sidebar() {
     window.dispatchEvent(new Event('maya_chat_changed'))
   }
 
-  const logout = () => {
-    localStorage.removeItem('maya_auth')
+  const logout = async () => {
+    try {
+      const { authAPI } = await import('@/lib/api')
+      await authAPI.logout()
+    } catch { /* best-effort; token is cleared locally regardless */ }
+    localStorage.removeItem('maya_token')
     navigate('/auth')
   }
 
@@ -110,14 +120,14 @@ export function Sidebar() {
 
         <div className='p-2'>
           <button onClick={newChat} className='w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors text-white text-sm font-medium'>
-            <Plus className='w-4 h-4'/> New Chat
+            <Plus className='w-4 h-4'/> {t('newChat')}
           </button>
         </div>
 
         <nav className='flex-1 overflow-y-auto py-2 space-y-4 px-2'>
           {chats.length>0 && (
             <div>
-              <div className='text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1'>Recent Chats</div>
+              <div className='text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1'>{t('recentChats')}</div>
               <div className='space-y-0.5'>
                 {chats.slice(0,5).map(chat=>(
                   <div key={chat.id} onClick={()=>selectChat(chat)}
@@ -134,13 +144,13 @@ export function Sidebar() {
           )}
           {navSections.map(s=>(
             <div key={s.label}>
-              <div className='text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1'>{s.label}</div>
+              <div className='text-xs font-semibold text-slate-600 uppercase tracking-wider px-3 mb-1'>{t(s.label)}</div>
               <div className='space-y-0.5'>
                 {s.items.map(item=>(
                   <NavLink key={item.to} to={item.to} onClick={()=>setOpen(false)}>
                     {({isActive})=>(
                       <div className={cn(isActive?'sidebar-item-active':'sidebar-item')}>
-                        <item.icon className='w-4 h-4 flex-shrink-0'/><span className='truncate'>{item.label}</span>
+                        <item.icon className='w-4 h-4 flex-shrink-0'/><span className='truncate'>{t(item.label)}</span>
                       </div>
                     )}
                   </NavLink>

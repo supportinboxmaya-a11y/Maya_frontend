@@ -1,8 +1,15 @@
 export default {
-  dashboard:"ড্যাশবোর্ড", tasks:"কাজ", memory:"মেমরি সেন্টার",
+  dashboard:"ড্যাশবোর্ড", chat:"চ্যাট / কাজ", memory:"মেমরি সেন্টার",
   tools:"টুল ম্যানেজার", analytics:"অ্যানালিটিক্স", cost:"খরচ ও বাজেট",
   workflow:"ওয়ার্কফ্লো বিল্ডার", plugins:"প্লাগইন মার্কেটপ্লেস",
+  agents:"এজেন্ট কমান্ড", learning:"লার্নিং সেন্টার",
   voice:"ভয়েস স্টুডিও", vision:"ভিশন স্টুডিও",
-  settings:"সেটিংস", notifications:"নোটিফিকেশন",
+  backendOverview:"ব্যাকএন্ড ওভারভিউ", logs:"লগ",
   team:"টিম ওয়ার্কস্পেস", security:"সিকিউরিটি সেন্টার",
+  testing:"টেস্টিং কনসোল", backup:"ব্যাকআপ ও রিস্টোর", integrations:"ইন্টিগ্রেশন",
+  settings:"সেটিংস", notifications:"নোটিফিকেশন",
+  sectionCore:"মূল", sectionBuild:"তৈরি", sectionIntelligence:"ইন্টেলিজেন্স",
+  sectionAiStudio:"এআই স্টুডিও", sectionBackend:"ব্যাকএন্ড",
+  sectionEnterprise:"এন্টারপ্রাইজ", sectionSystem:"সিস্টেম",
+  newChat:"নতুন চ্যাট", recentChats:"সাম্প্রতিক চ্যাট",
 }

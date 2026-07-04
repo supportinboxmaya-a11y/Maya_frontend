@@ -20,6 +20,8 @@ import { Team } from '@/pages/Team'
 import { Testing } from '@/pages/Testing'
 import { Backup } from '@/pages/Backup'
 import { Integrations } from '@/pages/Integrations'
+import { Learning } from '@/pages/Learning'
+import { Agents } from '@/pages/Agents'
 
 function PrivateRoute({ children }) {
   const auth = localStorage.getItem('maya_token')
@@ -39,6 +41,8 @@ export default function App() {
         <Route path='analytics' element={<Analytics/>}/>
         <Route path='cost' element={<Cost/>}/>
         <Route path='workflow' element={<Workflow/>}/>
+        <Route path='agents' element={<Agents/>}/>
+        <Route path='learning' element={<Learning/>}/>
         <Route path='plugins' element={<Plugins/>}/>
         <Route path='voice' element={<Voice/>}/>
         <Route path='vision' element={<Vision/>}/>

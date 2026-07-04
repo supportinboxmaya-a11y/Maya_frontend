@@ -29,6 +29,8 @@ export function Voice() {
             if (text) {
               const chat = await api.post('/agent/chat', { message: text }) as any
               setResponse(chat?.reply || chat?.message || '')
+            } else if (res?.message) {
+              toast(res.message, { icon: 'ℹ️' })
             }
           } catch { toast.error('Voice API unavailable — backend offline') }
           finally { setProcessing(false) }

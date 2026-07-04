@@ -122,6 +122,98 @@ export const analyticsAPI = {
   tools: () => api.get("/analytics/tools"),
 }
 
+// ── Memory+ (Phase 2: rank / cleanup / summary) ─
+export const memoryPlusAPI = {
+  rank: (q: string, limit = 5) =>
+    api.get("/memory/rank", { params: { q, limit } }),
+  cleanup: (dry_run = true) =>
+    api.post("/memory/cleanup", null, { params: { dry_run } }),
+  summary: (q = "", limit = 20) =>
+    api.get("/memory/summary", { params: { q, limit } }),
+}
+
+// ── Brain (Phase 3: analyze / graph) ───────────
+export const brainAPI = {
+  analyze: (goal: string) => api.get("/brain/analyze", { params: { goal } }),
+  graph: (steps: unknown[]) => api.post("/brain/graph", { steps }),
+}
+
+// ── Multi-Agent (Phase 4) ──────────────────────
+export const agentsAPI = {
+  list: () => api.get("/agents"),
+  orchestrate: (goal: string) => api.post("/agents/orchestrate", { goal }),
+  messages: (limit = 50) => api.get("/agents/messages", { params: { limit } }),
+}
+
+// ── Tool Framework (Phase 5) ───────────────────
+export const toolFrameworkAPI = {
+  list: () => api.get("/tools/framework"),
+  execute: (name: string, inputs: Record<string, unknown>, approved = false) =>
+    api.post("/tools/execute", { name, inputs, approved }),
+}
+
+// ── Workflow Runs (Phase 6: resumable engine) ──
+export const workflowRunAPI = {
+  plan: (goal: string) => api.post("/workflows/plan", { goal }),
+  runs: () => api.get("/workflows/runs"),
+  state: (runId: string) => api.get(`/workflows/runs/${runId}`),
+  cancel: (runId: string) => api.post(`/workflows/runs/${runId}/cancel`),
+}
+
+// ── Autonomous Mode (Phase 7, flag-gated) ──────
+export const autonomousAPI = {
+  run: (goal: string, approve_dangerous = false) =>
+    api.post("/autonomous/run", { goal, approve_dangerous }),
+}
+
+// ── LLM Router+ (Phase 8) ──────────────────────
+export const llmAPI = {
+  stats: () => api.get("/llm/stats"),
+  strategy: (strategy = "balanced") =>
+    api.get("/llm/strategy", { params: { strategy } }),
+}
+
+// ── System (Phase 1: metrics / flags / queue) ──
+export const systemAPI = {
+  metrics: () => api.get("/metrics"),
+  flags: () => api.get("/flags"),
+  queueStatus: () => api.get("/queue/status"),
+  health: () => api.get("/health", { baseURL: AGENT_URL.replace(/\/api\/v1$/, "") }),
+}
+
+// ── Learning Layer (Phase 10) ──────────────────
+export const learningAPI = {
+  feedback: (goal: string, output: string, rating: number, comment = "") =>
+    api.post("/learning/feedback", { goal, output, rating, comment }),
+  stats: () => api.get("/learning/stats"),
+  experience: (goal = "", limit = 10) =>
+    api.get("/learning/experience", { params: goal ? { goal, limit } : { limit } }),
+  compress: (memory_type = "chat", dry_run = true) =>
+    api.post("/learning/compress", { memory_type, dry_run }),
+}
+
+// ── Webhooks (outbound event notifications) ────
+export const webhookAPI = {
+  list: () => api.get("/webhooks"),
+  create: (name: string, url: string, events: string[] = ["task.done"]) =>
+    api.post("/webhooks", { name, url, events, active: true }),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/webhooks/${id}`, data),
+  delete: (id: string) => api.delete(`/webhooks/${id}`),
+}
+
+// ── Admin / Enterprise (Phase 9) ───────────────
+export const adminAPI = {
+  roles: () => api.get("/admin/roles"),
+  orgs: () => api.get("/admin/orgs"),
+  createOrg: (name: string) => api.post("/admin/orgs", { name }),
+  apiKeys: () => api.get("/admin/apikeys"),
+  createApiKey: (data: unknown) => api.post("/admin/apikeys", data),
+  revokeApiKey: (id: string) => api.delete(`/admin/apikeys/${id}`),
+  audit: () => api.get("/admin/audit"),
+  usage: () => api.get("/admin/usage"),
+  dashboard: () => api.get("/admin/dashboard"),
+}
+
 // ── Auth (Render issues the token) ─────────────
 export const authAPI = {
   login: (email: string, password: string) =>
@@ -134,8 +226,11 @@ export const authAPI = {
 
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
-  const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000"
-  const ws = new WebSocket(`${WS_URL}/ws/agent`)
+  // Derive WS endpoint from the agent URL so production works without extra config
+  const base = import.meta.env.VITE_WS_URL ||
+    AGENT_URL.replace(/^https/, "wss").replace(/^http/, "ws").replace(/\/api\/v1$/, "")
+  const token = localStorage.getItem("maya_token")
+  const ws = new WebSocket(`${base}/ws/agent${token ? `?token=${encodeURIComponent(token)}` : ""}`)
 
   ws.onmessage = (e) => {
     try { onMessage(JSON.parse(e.data)) }

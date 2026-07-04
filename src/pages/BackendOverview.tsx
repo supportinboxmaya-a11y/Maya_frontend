@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { StatusDot } from '@/components/ui/StatusDot'
 import { Activity, Database, Zap, Clock } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { systemAPI, llmAPI } from '@/lib/api'
 
 const services = [
   {name:"Planner",status:"online",latency:245,requests:34},
@@ -25,9 +26,29 @@ const queueData = [
 
 export function BackendOverview() {
   const [uptime, setUptime] = useState(0)
+  const [metrics, setMetrics] = useState<Record<string, unknown>|null>(null)
+  const [flags, setFlags] = useState<Record<string, boolean>|null>(null)
+  const [queue, setQueue] = useState<Record<string, unknown>|null>(null)
+  const [llmStats, setLlmStats] = useState<Record<string, unknown>|null>(null)
+
   useEffect(()=>{
     setUptime(Math.floor(Math.random()*86400))
     const i = setInterval(()=>setUptime(u=>u+1),1000)
+    return ()=>clearInterval(i)
+  },[])
+
+  useEffect(()=>{
+    const load = async () => {
+      const [m, f, q, l] = await Promise.allSettled([
+        systemAPI.metrics(), systemAPI.flags(), systemAPI.queueStatus(), llmAPI.stats(),
+      ])
+      if (m.status==='fulfilled') setMetrics(m.value as any)
+      if (f.status==='fulfilled') setFlags(f.value as any)
+      if (q.status==='fulfilled') setQueue(q.value as any)
+      if (l.status==='fulfilled') setLlmStats((l.value as any)?.stats || null)
+    }
+    load()
+    const i = setInterval(load, 15000)
     return ()=>clearInterval(i)
   },[])
 
@@ -93,6 +114,48 @@ export function BackendOverview() {
           </div>
         </div>
       </div>
+
+      {/* Live backend data (Phase 1 + 8) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="card p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">Feature Flags</h3>
+          {!flags || Object.keys(flags).length===0 ? (
+            <p className="text-xs text-slate-500">No flags reported by backend.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {Object.entries(flags).map(([k,v])=>(
+                <div key={k} className="flex items-center justify-between text-xs bg-[#1a1d2e] rounded-lg px-3 py-2">
+                  <span className="text-slate-300 font-mono">{k}</span>
+                  <span className={`badge ${v?"badge-green":"badge-yellow"}`}>{v?'on':'off'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="card p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">Live Metrics</h3>
+          {!metrics ? (
+            <p className="text-xs text-slate-500">Metrics unavailable — backend Phase 1 layer may be offline.</p>
+          ) : (
+            <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-auto max-h-56">{JSON.stringify(metrics,null,2)}</pre>
+          )}
+        </div>
+        <div className="card p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">LLM Provider Stats</h3>
+          {!llmStats || Object.keys(llmStats).length===0 ? (
+            <p className="text-xs text-slate-500">No provider stats yet — stats populate after LLM calls.</p>
+          ) : (
+            <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-auto max-h-56">{JSON.stringify(llmStats,null,2)}</pre>
+          )}
+        </div>
+      </div>
+
+      {queue && Object.keys(queue).length>0 && (
+        <div className="card p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">Live Queue Status</h3>
+          <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-auto max-h-48">{JSON.stringify(queue,null,2)}</pre>
+        </div>
+      )}
     </div>
   )
 }

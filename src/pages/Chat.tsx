@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTaskStore } from '@/store'
 import { taskAPI } from '@/lib/api'
 import { Send, Loader2, ArrowLeft } from 'lucide-react'
@@ -6,9 +6,13 @@ import { StepItem } from '@/components/chat/StepItem'
 import toast from 'react-hot-toast'
 
 export function Chat() {
-  const { tasks, activeTaskId, setActiveTask, addTask, updateTask } = useTaskStore()
+  const { tasks, activeTaskId, setActiveTask, addTask, updateTask, setTasks } = useTaskStore()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    taskAPI.list({ limit: 20 }).then((data: any) => Array.isArray(data) && setTasks(data)).catch(() => {})
+  }, [])
   const activeTask = tasks.find(t=>t.id===activeTaskId)
 
   const handleSubmit = async () => {
