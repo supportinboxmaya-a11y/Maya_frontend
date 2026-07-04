@@ -1,4 +1,4 @@
-import { Bell, Command } from 'lucide-react'
+import { Bell, Command, Menu } from 'lucide-react'
 import { formatCost } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useNotificationStore, useCostStore, useUIStore } from '@/store'
@@ -10,25 +10,36 @@ export function TopBar() {
   const { setCommandPalette } = useUIStore()
 
   return (
-    <header className="h-14 border-b border-[#1e2130] bg-[#0f1117]/80 backdrop-blur flex items-center justify-between px-3 md:px-6 sticky top-0 z-40">
-      <button onClick={()=>setCommandPalette(true)}
-        className="flex items-center gap-2 bg-[#14161e] border border-[#1e2130] rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:border-purple-500/30 transition-all flex-1 max-w-[180px] md:max-w-xs">
-        <Command className="w-3 h-3 flex-shrink-0"/>
-        <span className="truncate">Search...</span>
-        <span className="ml-auto text-xs hidden md:flex items-center gap-0.5">⌘K</span>
+    <header className="h-16 border-b border-[#262b3f] bg-[#0f1117]/90 backdrop-blur flex items-center gap-3 px-3 md:px-6 sticky top-0 z-40">
+      <button onClick={() => window.dispatchEvent(new Event('maya_open_sidebar'))}
+        aria-label="Open menu"
+        className="md:hidden flex items-center justify-center w-11 h-11 rounded-xl bg-[#14161e] border border-[#262b3f] text-slate-300 flex-shrink-0">
+        <Menu className="w-5 h-5"/>
       </button>
-      <div className="flex items-center gap-2 ml-2">
-        <div className="hidden md:flex items-center gap-2 bg-[#14161e] border border-[#1e2130] rounded-lg px-3 py-1.5">
-          <div className="w-16 h-1.5 bg-[#1a1d2e] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full" style={{width:`${Math.min(costSummary.budget_used_pct,100)}%`}}/>
-          </div>
-          <span className="text-xs text-slate-500 font-mono">{formatCost(costSummary.total_cost_usd)} / {formatCost(costSummary.budget_usd)}</span>
+      <button onClick={() => setCommandPalette(true)}
+        className="flex items-center gap-2 bg-[#14161e] border border-[#262b3f] rounded-xl px-4 h-11 text-[15px] text-slate-400 hover:border-purple-400/40 transition-all flex-1 min-w-0">
+        <Command className="w-4 h-4 flex-shrink-0"/>
+        <span className="truncate">Search</span>
+        <span className="ml-auto text-xs hidden md:inline">⌘K</span>
+      </button>
+      <div className="hidden md:flex items-center gap-2 bg-[#14161e] border border-[#262b3f] rounded-xl px-3 h-11 flex-shrink-0">
+        <div className="w-16 h-2 bg-[#1a1d2e] rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+            style={{width: `${Math.min(costSummary.budget_used_pct, 100)}%`}}/>
         </div>
-        <button onClick={()=>navigate('/notifications')} className="relative p-2 hover:bg-[#1a1d2e] rounded-lg transition-colors text-slate-400">
-          <Bell className="w-4 h-4"/>
-          {unreadCount>0 && <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{unreadCount}</span>}
-        </button>
+        <span className="text-xs text-slate-300 font-mono">
+          {formatCost(costSummary.total_cost_usd)} / {formatCost(costSummary.budget_usd)}
+        </span>
       </div>
+      <button onClick={() => navigate('/notifications')} aria-label="Notifications"
+        className="relative flex items-center justify-center w-11 h-11 rounded-xl hover:bg-[#1a1d2e] transition-colors text-slate-300 flex-shrink-0">
+        <Bell className="w-5 h-5"/>
+        {unreadCount > 0 && (
+          <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+            {unreadCount}
+          </span>
+        )}
+      </button>
     </header>
   )
 }
