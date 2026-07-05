@@ -48,7 +48,8 @@ export function Dashboard() {
     setLoading(true)
     try {
       const { agentAPI } = await import('@/lib/api')
-      const res: any = await agentAPI.chat(currentInput)
+      const chatId = localStorage.getItem('maya_active_chat') || undefined
+      const res: any = await agentAPI.chat(currentInput, chatId)
       const reply = res?.reply || res?.message || res?.result || 'No response received.'
       setMessages(prev=>[...prev, {role:'assistant', content: reply, time:new Date().toLocaleTimeString()}])
     } catch (e: any) {

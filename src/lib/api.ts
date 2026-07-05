@@ -53,8 +53,8 @@ workerApi.interceptors.response.use(
 export const agentAPI = {
   run: (goal: string, budget_usd?: number) =>
     api.post("/agent/run", { goal, budget_usd }),
-  chat: (message: string) =>
-    api.post("/agent/chat", { message }),
+  chat: (message: string, chat_id?: string) =>
+    api.post("/agent/chat", { message, chat_id }),
   think: (problem: string, depth = "normal") =>
     api.post("/agent/think", { problem, depth }),
   status: () => api.get("/agent/status"),
@@ -212,6 +212,15 @@ export const adminAPI = {
   audit: () => api.get("/admin/audit"),
   usage: () => api.get("/admin/usage"),
   dashboard: () => api.get("/admin/dashboard"),
+  // Multi-user (Supabase) — user management
+  users: () => api.get("/admin/users"),
+  banUser: (id: string, banned: boolean) => api.put(`/admin/users/${id}/ban`, { banned }),
+  setUserBudget: (id: string, budget_usd: number) => api.put(`/admin/users/${id}/budget`, { budget_usd }),
+}
+
+// ── Current user (multi-user mode) ─────────────
+export const meAPI = {
+  get: () => api.get("/users/me"),
 }
 
 // ── Auth (Render issues the token) ─────────────
