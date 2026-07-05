@@ -12,4 +12,5 @@ export default {
   sectionAiStudio:"AI Studio", sectionBackend:"Backend",
   sectionEnterprise:"Enterprise", sectionSystem:"System",
   newChat:"New Chat", recentChats:"Recent Chats",
+  sectionControl:"Control", admin:"Admin Panel", approvals:"Approvals", llmProviders:"LLM Providers", prompts:"Prompt Library", skillsPage:"Skills", docs:"Documentation",
 }

@@ -22,6 +22,12 @@ import { Backup } from '@/pages/Backup'
 import { Integrations } from '@/pages/Integrations'
 import { Learning } from '@/pages/Learning'
 import { Agents } from '@/pages/Agents'
+import { AdminPanel } from '@/pages/AdminPanel'
+import { Approvals } from '@/pages/Approvals'
+import { LLMProviders } from '@/pages/LLMProviders'
+import { Prompts } from '@/pages/Prompts'
+import { Skills } from '@/pages/Skills'
+import { Docs } from '@/pages/Docs'
 
 function PrivateRoute({ children }) {
   const auth = localStorage.getItem('maya_token')
@@ -43,6 +49,12 @@ export default function App() {
         <Route path='workflow' element={<Workflow/>}/>
         <Route path='agents' element={<Agents/>}/>
         <Route path='learning' element={<Learning/>}/>
+        <Route path='admin' element={<AdminPanel/>}/>
+        <Route path='approvals' element={<Approvals/>}/>
+        <Route path='llm' element={<LLMProviders/>}/>
+        <Route path='prompts' element={<Prompts/>}/>
+        <Route path='skills' element={<Skills/>}/>
+        <Route path='docs' element={<Docs/>}/>
         <Route path='plugins' element={<Plugins/>}/>
         <Route path='voice' element={<Voice/>}/>
         <Route path='vision' element={<Vision/>}/>

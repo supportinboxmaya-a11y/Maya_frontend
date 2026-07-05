@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap } from 'lucide-react'
+import { MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
@@ -34,6 +34,14 @@ const navSections = [
     {to:'/testing',icon:TestTube,label:'testing'},
     {to:'/backup',icon:ArchiveRestore,label:'backup'},
     {to:'/integrations',icon:Globe,label:'integrations'},
+  ]},
+  {label:'sectionControl',items:[
+    {to:'/admin',icon:ShieldCheck,label:'admin'},
+    {to:'/approvals',icon:UserCheck,label:'approvals'},
+    {to:'/llm',icon:Cpu,label:'llmProviders'},
+    {to:'/prompts',icon:BookOpenText,label:'prompts'},
+    {to:'/skills',icon:Sparkles,label:'skillsPage'},
+    {to:'/docs',icon:FileText,label:'docs'},
   ]},
   {label:'sectionSystem',items:[
     {to:'/notifications',icon:Bell,label:'notifications'},

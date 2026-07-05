@@ -12,4 +12,5 @@ export default {
   sectionAiStudio:"এআই স্টুডিও", sectionBackend:"ব্যাকএন্ড",
   sectionEnterprise:"এন্টারপ্রাইজ", sectionSystem:"সিস্টেম",
   newChat:"নতুন চ্যাট", recentChats:"সাম্প্রতিক চ্যাট",
+  sectionControl:"Control", admin:"Admin Panel", approvals:"Approvals", llmProviders:"LLM Providers", prompts:"Prompt Library", skillsPage:"Skills", docs:"Documentation",
 }
