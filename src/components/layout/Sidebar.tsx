@@ -112,6 +112,17 @@ export function Sidebar() {
     navigate('/auth')
   }
 
+  const [me, setMe] = useState<{email?: string; role?: string} | null>(null)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { meAPI } = await import('@/lib/api')
+        const res: any = await meAPI.get()
+        setMe(res)
+      } catch { /* fall back to defaults below */ }
+    })()
+  }, [])
+
   return (
     <>
       {open && <div className='md:hidden fixed inset-0 bg-black/60 z-40' onClick={()=>setOpen(false)}/>}
@@ -134,7 +145,7 @@ export function Sidebar() {
           </button>
         </div>
 
-        <nav className='flex-1 overflow-y-auto py-2 space-y-4 px-2'>
+        <nav className='flex-1 min-h-0 overflow-y-auto py-2 space-y-4 px-2'>
           {chats.length>0 && (
             <div>
               <div className='text-[12px] font-semibold text-slate-500 uppercase tracking-widest px-3 mb-1.5'>{t('recentChats')}</div>
@@ -173,10 +184,12 @@ export function Sidebar() {
         <div className='p-3 border-t border-[#1e2130]'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <div className='w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-400'>A</div>
+              <div className='w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-400'>
+                {(me?.email?.[0] || 'A').toUpperCase()}
+              </div>
               <div className='flex-1 min-w-0'>
-                <div className='text-xs font-medium text-white'>Admin</div>
-                <div className='text-xs text-slate-500'>admin@maya.ai</div>
+                <div className='text-xs font-medium text-white truncate'>{me?.role === 'admin' ? 'Admin' : (me?.role || 'Admin')}</div>
+                <div className='text-xs text-slate-500 truncate'>{me?.email || 'admin@maya.ai'}</div>
               </div>
             </div>
             <button onClick={logout} className='text-slate-500 hover:text-red-400 transition-colors'>
