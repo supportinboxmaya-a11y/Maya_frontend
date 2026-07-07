@@ -20,3 +20,19 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </React.StrictMode>
 )
+
+// ── PWA: register service worker + auto-update ──────────────
+// When a new version deploys, the new service worker activates immediately
+// (skipWaiting/clients.claim in sw.js) and this reloads the page once to
+// pick it up — no manual update, no app-store/APK reinstall needed.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* PWA install is optional, ignore failures */ })
+  })
+  let refreshing = false
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return
+    refreshing = true
+    window.location.reload()
+  })
+}
