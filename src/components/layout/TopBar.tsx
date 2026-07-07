@@ -1,3 +1,4 @@
+
 import { Bell, Command, Menu, ArrowLeft } from 'lucide-react'
 import { formatCost } from '@/lib/utils'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -18,7 +19,11 @@ export function TopBar() {
   // random. Always-to-home is simple and predictable regardless of the path
   // taken to get here.
   const goBack = () => {
-    navigate('/')
+    // Opens the menu instead of jumping to Dashboard/chat — that's what
+    // people actually expect "back" to do when they came here from the
+    // sidebar: return to the menu to pick somewhere else, not land on a
+    // specific page.
+    window.dispatchEvent(new Event('maya_open_sidebar'))
   }
 
   return (
