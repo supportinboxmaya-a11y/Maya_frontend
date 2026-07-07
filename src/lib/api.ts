@@ -105,6 +105,9 @@ export const memoryAPI = {
     api.post("/memory", { content, type }),
   delete: (id: string) => api.delete(`/memory/${id}`),
   stats: () => api.get("/memory/stats"),
+  cleanup: (dryRun = true) => api.post("/memory/cleanup", null, { params: { dry_run: dryRun } }),
+  compress: (memoryType = "general", keepRecent = 20, dryRun = true) =>
+    api.post("/memory/compress", null, { params: { memory_type: memoryType, keep_recent: keepRecent, dry_run: dryRun } }),
 }
 
 // ── Tools ──────────────────────────────────────
