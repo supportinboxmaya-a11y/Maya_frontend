@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Save, Eye, EyeOff, Shield, Cpu, DollarSign, Bell, Globe, Palette } from 'lucide-react'
+import { Save, Eye, EyeOff, Shield, Cpu, DollarSign, Bell, Globe, Palette, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import i18n from '@/i18n/config'
+import { api, getEffectiveBackendUrl, setBackendUrl, DEFAULT_AGENT_URL } from '@/lib/api'
 
 type Tab = "api_keys"|"agent"|"budget"|"notifications"|"language"|"appearance"
 
@@ -15,12 +16,15 @@ const tabs = [
   {id:"appearance" as Tab,label:"Appearance",icon:Palette},
 ]
 
+// providerId matches the backend's short provider names (PROVIDER_INFO in
+// llm/router.py) — key stays as the env-var-style label since that's what
+// people recognize, but calls use providerId.
 const providers = [
-  {key:"GROQ_KEY",label:"Groq",free:true,link:"console.groq.com"},
-  {key:"GEMINI_KEY",label:"Google Gemini",free:true,link:"aistudio.google.com"},
-  {key:"OPENAI_KEY",label:"OpenAI",free:false,link:"platform.openai.com"},
-  {key:"ANTHROPIC_KEY",label:"Anthropic Claude",free:false,link:"console.anthropic.com"},
-  {key:"DEEPSEEK_KEY",label:"DeepSeek",free:false,link:"platform.deepseek.com"},
+  {key:"GROQ_KEY",providerId:"groq",label:"Groq",free:true,link:"console.groq.com"},
+  {key:"GEMINI_KEY",providerId:"gemini",label:"Google Gemini",free:true,link:"aistudio.google.com"},
+  {key:"OPENAI_KEY",providerId:"openai",label:"OpenAI",free:false,link:"platform.openai.com"},
+  {key:"ANTHROPIC_KEY",providerId:"claude",label:"Anthropic Claude",free:false,link:"console.anthropic.com"},
+  {key:"DEEPSEEK_KEY",providerId:"deepseek",label:"DeepSeek",free:false,link:"platform.deepseek.com"},
 ]
 
 interface SettingsState {
@@ -75,17 +79,79 @@ function ApiKeyRow({provider, value, onChange}: {provider: typeof providers[0]; 
   )
 }
 
+function ServerUrlCard() {
+  const [url, setUrl] = useState(getEffectiveBackendUrl())
+  const [saving, setSaving] = useState(false)
+  const isDefault = url === DEFAULT_AGENT_URL
+
+  const testAndSave = async () => {
+    const trimmed = url.trim().replace(/\/+$/, "")
+    if (!trimmed) return toast.error('Enter a server URL')
+    setSaving(true)
+    try {
+      // /health lives at the server root, not under /api/v1 — strip that
+      // suffix (if present) before pinging it.
+      const root = trimmed.replace(/\/api\/v\d+$/, "")
+      await api.get('/health', { baseURL: root, timeout: 8000 } as any)
+      toast.success('Server reachable — reloading with new URL...')
+      setTimeout(() => setBackendUrl(trimmed), 600)
+    } catch {
+      toast.error("Couldn't reach that server. Check the URL, or save anyway if you're sure.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const resetToDefault = () => setBackendUrl(DEFAULT_AGENT_URL)
+
+  return (
+    <div className="card p-5">
+      <h3 className="text-sm font-semibold text-white mb-1">Backend Server</h3>
+      <p className="text-xs text-slate-500 mb-4">
+        Which server the app talks to. Change this when migrating from Render to your own VPS —
+        no rebuild needed, it takes effect after the page reloads.
+      </p>
+      <label className="text-xs font-medium text-slate-400 block mb-1">Server URL</label>
+      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://your-server.com/api/v1"
+        className="input text-sm font-mono mb-3"/>
+      <div className="flex items-center gap-2">
+        <button onClick={testAndSave} disabled={saving} className="btn-primary text-sm">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+          {saving ? 'Checking...' : 'Save & Reload'}
+        </button>
+        {!isDefault && <button onClick={resetToDefault} className="btn-secondary text-sm">Reset to default</button>}
+      </div>
+      <div className="mt-3 text-xs text-slate-500">Default: <span className="font-mono">{DEFAULT_AGENT_URL}</span></div>
+    </div>
+  )
+}
+
 export function Settings() {
   const [tab, setTab] = useState<Tab>("api_keys")
   const [s, setS] = useState<SettingsState>(loadSettings)
   const [dirty, setDirty] = useState(false)
+  const [savingKeys, setSavingKeys] = useState(false)
 
   const update = (patch: Partial<SettingsState>) => { setS(prev => ({ ...prev, ...patch })); setDirty(true) }
 
-  const save = () => {
+  const save = async () => {
     localStorage.setItem('maya_settings', JSON.stringify(s))
     setDirty(false)
-    toast.success('Settings saved')
+
+    if (tab === 'api_keys') {
+      const entries = providers.filter(p => (s.keys[p.key] || '').trim())
+      if (entries.length === 0) { toast.success('Settings saved'); return }
+      setSavingKeys(true)
+      const results = await Promise.allSettled(
+        entries.map(p => api.put(`/llm/providers/${p.providerId}/key`, { api_key: s.keys[p.key].trim() }))
+      )
+      setSavingKeys(false)
+      const failed = results.filter(r => r.status === 'rejected').length
+      if (failed === 0) toast.success(`${entries.length} API key(s) saved and applied`)
+      else toast.error(`${failed} of ${entries.length} key(s) failed to save`)
+    } else {
+      toast.success('Settings saved')
+    }
   }
 
   // warn about unsaved changes on tab close
@@ -102,8 +168,9 @@ export function Settings() {
           <h1 className="text-2xl font-bold text-white">Settings</h1>
           <p className="text-sm text-slate-400 mt-0.5">Configure Maya 2.0 ULTRA</p>
         </div>
-        <button onClick={save} className={cn("btn-primary", !dirty && "opacity-60")}>
-          <Save className="w-4 h-4"/>{dirty ? 'Save Changes' : 'Saved'}
+        <button onClick={save} disabled={savingKeys} className={cn("btn-primary", !dirty && !savingKeys && "opacity-60")}>
+          {savingKeys ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+          {savingKeys ? 'Saving...' : (dirty ? 'Save Changes' : 'Saved')}
         </button>
       </div>
 
@@ -127,8 +194,8 @@ export function Settings() {
                     onChange={v => update({ keys: { ...s.keys, [p.key]: v } })}/>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs text-yellow-400">
-                ⚠️ Keys are stored only in this browser. The backend reads its own keys from server environment variables (Render dashboard).
+              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-300">
+                ℹ️ Paste a key and tap "Save Changes" — it's sent to the backend and applied immediately (no redeploy needed). If Supabase is configured, it's also saved there so it survives the next server restart; otherwise it only lasts until the backend restarts.
               </div>
             </div>
           )}
@@ -160,6 +227,8 @@ export function Settings() {
               </div>
             </div>
           )}
+
+          {tab==="agent" && <ServerUrlCard/>}
 
           {tab==="budget" && (
             <div className="card p-5">

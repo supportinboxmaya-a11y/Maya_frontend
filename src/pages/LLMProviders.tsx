@@ -42,7 +42,7 @@ export function LLMProviders() {
                 <div className={cn('w-3 h-3 rounded-full', p.active ? 'bg-emerald-400' : p.configured ? 'bg-yellow-400' : 'bg-slate-600')}/>
                 <div className="flex-1">
                   <div className="text-[15px] font-semibold text-white">{p.label}</div>
-                  <div className="text-sm text-slate-400">{p.configured ? 'Key set' : 'No key'}</div>
+                  <div className="text-sm text-slate-400">{p.configured ? 'Key set' : 'No key'} · <a href="/settings" className="text-purple-400 hover:underline">manage in Settings &gt; API Keys</a></div>
                 </div>
                 <button onClick={() => toggle(p)} disabled={!p.configured}
                   className={cn('w-14 h-8 rounded-full relative transition-colors', p.enabled && p.configured ? 'bg-purple-600' : 'bg-[#262b3f]', !p.configured && 'opacity-40')}>

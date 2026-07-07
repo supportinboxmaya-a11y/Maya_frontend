@@ -4,8 +4,27 @@ import axios from "axios"
 // AGENT (Render, Python): auth + agent + tasks + memory + tools +
 //   workflows + analytics + logs + backup + plugins + vision + voice
 // WORKER (Cloudflare): edge/light work (quick chat, D1/KV)
-const AGENT_URL = import.meta.env.VITE_AGENT_URL || "https://m-2-0.onrender.com/api/v1"
+//
+// AGENT_URL can be overridden at runtime (Settings page) via localStorage,
+// e.g. when migrating from Render to a VPS — no rebuild/redeploy needed for
+// that switch. VITE_AGENT_URL (build-time) is the default before any
+// override is set.
+export const DEFAULT_AGENT_URL = import.meta.env.VITE_AGENT_URL || "https://m-2-0.onrender.com/api/v1"
+const AGENT_URL = localStorage.getItem("maya_backend_url") || DEFAULT_AGENT_URL
 const WORKER_URL = import.meta.env.VITE_API_URL || "https://maya-brain-api2.supportinbox-maya.workers.dev"
+
+// Called from Settings. Reloads the page so every client (api, workerApi,
+// websocket) re-initializes against the new URL — simpler and more reliable
+// than trying to swap baseURL on already-created axios instances mid-session.
+export function setBackendUrl(url: string) {
+  const trimmed = url.trim().replace(/\/+$/, "")
+  if (trimmed) localStorage.setItem("maya_backend_url", trimmed)
+  else localStorage.removeItem("maya_backend_url")
+  window.location.reload()
+}
+export function getEffectiveBackendUrl(): string {
+  return localStorage.getItem("maya_backend_url") || DEFAULT_AGENT_URL
+}
 
 // Primary client -> Render backend (all pages use this)
 export const api = axios.create({
