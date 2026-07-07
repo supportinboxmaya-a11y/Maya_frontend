@@ -1,16 +1,42 @@
-import { Bell, Command, Menu } from 'lucide-react'
+import { Bell, Command, Menu, ArrowLeft } from 'lucide-react'
+import { useEffect } from 'react'
 import { formatCost } from '@/lib/utils'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useNotificationStore, useCostStore, useUIStore } from '@/store'
 
 export function TopBar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { unreadCount } = useNotificationStore()
   const { costSummary } = useCostStore()
   const { setCommandPalette } = useUIStore()
+  const isHome = location.pathname === '/' || location.pathname === ''
+
+  // Track how many in-app pages have been visited this session (browser
+  // history internals aren't reliably readable from React Router). Used so
+  // "Back" only jumps to a real previous page instead of exiting the app.
+  useEffect(() => {
+    const count = parseInt(sessionStorage.getItem('maya_nav_count') || '0', 10)
+    sessionStorage.setItem('maya_nav_count', String(count + 1))
+  }, [location.pathname])
+
+  const goBack = () => {
+    const count = parseInt(sessionStorage.getItem('maya_nav_count') || '0', 10)
+    if (count > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
 
   return (
     <header className="h-16 border-b border-[#262b3f] bg-[#0f1117]/90 backdrop-blur flex items-center gap-3 px-3 md:px-6 sticky top-0 z-40">
+      {!isHome && (
+        <button onClick={goBack} aria-label="Go back"
+          className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#14161e] border border-[#262b3f] text-slate-300 flex-shrink-0">
+          <ArrowLeft className="w-5 h-5"/>
+        </button>
+      )}
       <button onClick={() => window.dispatchEvent(new Event('maya_open_sidebar'))}
         aria-label="Open menu"
         className="md:hidden flex items-center justify-center w-11 h-11 rounded-xl bg-[#14161e] border border-[#262b3f] text-slate-300 flex-shrink-0">
