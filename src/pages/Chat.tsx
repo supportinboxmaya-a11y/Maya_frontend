@@ -66,8 +66,43 @@ export function Chat() {
             <ArrowLeft className="w-4 h-4"/> Back to tasks
           </button>
           <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-            <div className="card p-4"><div className="text-xs text-slate-500 mb-1">Goal</div><div className="text-sm text-white">{activeTask.goal}</div></div>
-            {activeTask.steps.map((s,i)=><StepItem key={s.step} step={s} index={i}/>)}
+            <div className="card p-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs text-slate-500">Goal</div>
+                <span className={`badge text-[10px] ${activeTask.status==='done'?'badge-green':activeTask.status==='failed'?'badge-red':activeTask.status==='waiting_approval'?'badge-yellow':'badge-blue'}`}>
+                  {activeTask.status === 'waiting_approval' ? 'waiting for approval' : activeTask.status}
+                </span>
+              </div>
+              <div className="text-sm text-white">{activeTask.goal}</div>
+            </div>
+
+            {activeTask.status === 'waiting_approval' && (
+              <div className="card p-4 border-amber-500/30 bg-amber-500/10">
+                <div className="text-sm text-amber-400">⚠️ Maya needs your approval to continue.</div>
+                <div className="text-xs text-slate-400 mt-1">Check the Approvals page to approve or reject this action.</div>
+              </div>
+            )}
+            {(activeTask.status === 'running' || activeTask.status === 'pending') && activeTask.status !== 'waiting_approval' && (
+              <div className="card p-4 flex items-center gap-3">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-400"/>
+                <span className="text-sm text-slate-400">Maya is working on this...</span>
+              </div>
+            )}
+
+            {activeTask.steps?.map((s,i)=><StepItem key={s.step} step={s} index={i}/>)}
+
+            {activeTask.status === 'done' && (
+              <div className="card p-4">
+                <div className="text-xs text-slate-500 mb-1">Result</div>
+                <div className="text-sm text-white whitespace-pre-wrap">{activeTask.result || 'Task completed with no text result.'}</div>
+              </div>
+            )}
+            {activeTask.status === 'failed' && (
+              <div className="card p-4 border-red-500/30 bg-red-500/10">
+                <div className="text-xs text-red-400 mb-1">Failed</div>
+                <div className="text-sm text-red-300">{activeTask.error || activeTask.result || 'Task failed with no details.'}</div>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
             <input value={input} onChange={e=>setInput(e.target.value)}
