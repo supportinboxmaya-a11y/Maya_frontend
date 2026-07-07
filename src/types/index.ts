@@ -16,7 +16,7 @@ export interface Step {
 }
 export interface Memory {
   id: string; content: string; type: MemoryType
-  metadata?: Record<string,unknown>; timestamp: string
+  metadata?: Record<string,unknown>; timestamp: string; version?: number
 }
 export interface Tool {
   name: string; description: string; category: ToolCategory
