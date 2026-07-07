@@ -1,5 +1,4 @@
 import { Bell, Command, Menu, ArrowLeft } from 'lucide-react'
-import { useEffect } from 'react'
 import { formatCost } from '@/lib/utils'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useNotificationStore, useCostStore, useUIStore } from '@/store'
@@ -12,21 +11,14 @@ export function TopBar() {
   const { setCommandPalette } = useUIStore()
   const isHome = location.pathname === '/' || location.pathname === ''
 
-  // Track how many in-app pages have been visited this session (browser
-  // history internals aren't reliably readable from React Router). Used so
-  // "Back" only jumps to a real previous page instead of exiting the app.
-  useEffect(() => {
-    const count = parseInt(sessionStorage.getItem('maya_nav_count') || '0', 10)
-    sessionStorage.setItem('maya_nav_count', String(count + 1))
-  }, [location.pathname])
-
+  // Deliberately always returns to Dashboard/home rather than doing a
+  // history-based back (navigate(-1)). Sidebar navigation can build up an
+  // unpredictable history stack (e.g. Chat -> Admin Panel -> Approvals), so
+  // "back" going to whatever page happened to be visited previously felt
+  // random. Always-to-home is simple and predictable regardless of the path
+  // taken to get here.
   const goBack = () => {
-    const count = parseInt(sessionStorage.getItem('maya_nav_count') || '0', 10)
-    if (count > 1) {
-      navigate(-1)
-    } else {
-      navigate('/')
-    }
+    navigate('/')
   }
 
   return (
