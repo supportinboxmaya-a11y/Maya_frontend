@@ -1,4 +1,3 @@
-
 import { NavLink, useNavigate } from 'react-router-dom'
 import { MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -126,7 +125,13 @@ export function Sidebar() {
 
   return (
     <>
-      {open && <div className='md:hidden fixed inset-0 bg-black/60 z-40' onClick={()=>setOpen(false)}/>}
+      <div
+        className={cn(
+          'md:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-200',
+          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={() => setOpen(false)}
+      />
       <aside className={cn(
         'fixed top-0 left-0 h-screen w-60 bg-[#0f1117] border-r border-[#1e2130] flex flex-col z-50 transition-transform duration-200',
         'md:translate-x-0',
