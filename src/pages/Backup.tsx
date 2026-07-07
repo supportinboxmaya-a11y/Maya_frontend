@@ -1,21 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { ArchiveRestore, Plus, Loader2 } from 'lucide-react'
+import { ArchiveRestore, Plus, Loader2, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function Backup() {
   const [creating, setCreating] = useState(false)
-  const [restoring, setRestoring] = useState<string|null>(null)
+  const [restoring, setRestoring] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [backups, setBackups] = useState<any[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const fetchBackups = async () => {
     try {
       const data = await api.get('/backup/list')
       setBackups((data as any) || [])
     } catch { setBackups([]) }
-    setLoaded(true)
+    setLoading(false)
   }
+  // Was previously called directly in the render body (`if (!loaded) fetchBackups()`)
+  // instead of an effect, which could fire multiple overlapping requests before
+  // the first one resolved. useEffect runs it exactly once per mount instead.
+  useEffect(() => { fetchBackups() }, [])
 
   const createBackup = async () => {
     setCreating(true)
@@ -36,7 +41,16 @@ export function Backup() {
     finally { setRestoring(null) }
   }
 
-  if (!loaded) fetchBackups()
+  const deleteBackup = async (id: string, name: string) => {
+    if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return
+    setDeleting(id)
+    try {
+      await api.delete(`/backup/${id}`)
+      setBackups(prev => prev.filter(b => b.id !== id))
+      toast.success('Backup deleted')
+    } catch { toast.error('Failed to delete backup') }
+    finally { setDeleting(null) }
+  }
 
   return (
     <div className="p-6 space-y-4">
@@ -47,21 +61,29 @@ export function Backup() {
           Create Backup
         </button>
       </div>
-      {backups.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
+      ) : backups.length === 0 ? (
         <div className="text-center text-slate-500 py-20">No backups yet</div>
       ) : (
         <div className="space-y-2">
           {backups.map((b: any) => (
-            <div key={b.id} className="card p-4 flex items-center justify-between">
-              <div>
-                <div className="text-sm text-white">{b.name || `Backup ${b.id}`}</div>
+            <div key={b.id} className="card p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm text-white truncate">{b.name || `Backup ${b.id}`}</div>
                 <div className="text-xs text-slate-500">{new Date(b.created_at).toLocaleString()}</div>
               </div>
-              <button onClick={() => restoreBackup(b.id)} disabled={restoring === b.id}
-                className="btn-secondary text-xs py-1.5">
-                {restoring === b.id ? <Loader2 className="w-3 h-3 animate-spin"/> : <ArchiveRestore className="w-3 h-3"/>}
-                Restore
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={() => restoreBackup(b.id)} disabled={restoring === b.id}
+                  className="btn-secondary text-xs py-1.5">
+                  {restoring === b.id ? <Loader2 className="w-3 h-3 animate-spin"/> : <ArchiveRestore className="w-3 h-3"/>}
+                  Restore
+                </button>
+                <button onClick={() => deleteBackup(b.id, b.name)} disabled={deleting === b.id}
+                  className="text-slate-500 hover:text-red-400 transition-colors">
+                  {deleting === b.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4"/>}
+                </button>
+              </div>
             </div>
           ))}
         </div>

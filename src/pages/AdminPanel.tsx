@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminAPI, systemAPI, api } from '@/lib/api'
-import { ShieldCheck, RefreshCw, Loader2, Ban, CheckCircle2 } from 'lucide-react'
+import { ShieldCheck, RefreshCw, Loader2, Ban, CheckCircle2, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type MayaUser = {
@@ -61,6 +61,25 @@ export function AdminPanel() {
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, budget_usd: value } : x))
       toast.success('Budget updated')
     } catch { toast.error('Could not update budget') }
+  }
+
+  const deleteOrg = async (id: string, name: string) => {
+    if (!window.confirm(`Delete organization "${name}"? This also removes its members. This can't be undone.`)) return
+    try {
+      await adminAPI.deleteOrg(id)
+      setOrgs(prev => prev.filter(o => o.id !== id))
+      toast.success('Organization deleted')
+    } catch { toast.error('Could not delete organization') }
+  }
+
+  const deleteApiKey = async (id: string, index: number) => {
+    if (!id) { toast.error('This key has no id to revoke'); return }
+    if (!window.confirm('Revoke this API key? Anything using it will stop working immediately.')) return
+    try {
+      await adminAPI.revokeApiKey(id)
+      setKeys(prev => prev.filter((_, i) => i !== index))
+      toast.success('Key revoked')
+    } catch { toast.error('Could not revoke key') }
   }
 
   return (
@@ -128,14 +147,31 @@ export function AdminPanel() {
             <div className="section-title">Organizations ({orgs.length})</div>
             <div className="card divide-y divide-[#262b3f]">
               {orgs.length === 0 ? <div className="p-5 text-sm text-slate-500">No organizations yet.</div> :
-                orgs.map((o: any) => <div key={o.id} className="p-4 flex justify-between"><span className="text-white text-[15px]">{o.name}</span><span className="text-xs text-slate-500 font-mono">{o.id}</span></div>)}
+                orgs.map((o: any) => (
+                  <div key={o.id} className="p-4 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white text-[15px] truncate">{o.name}</div>
+                      <div className="text-xs text-slate-500 font-mono truncate">{o.id}</div>
+                    </div>
+                    <button onClick={() => deleteOrg(o.id, o.name)} className="text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
+                      <Trash2 className="w-4 h-4"/>
+                    </button>
+                  </div>
+                ))}
             </div>
           </section>
           <section>
             <div className="section-title">API Keys ({keys.length})</div>
             <div className="card divide-y divide-[#262b3f]">
               {keys.length === 0 ? <div className="p-5 text-sm text-slate-500">No keys. Generate from Integrations.</div> :
-                keys.map((k: any, i) => <div key={i} className="p-4 text-[15px] text-white">{k.name || 'API Key'}</div>)}
+                keys.map((k: any, i) => (
+                  <div key={k.id || i} className="p-4 flex items-center justify-between gap-3">
+                    <span className="text-[15px] text-white truncate">{k.name || 'API Key'}</span>
+                    <button onClick={() => deleteApiKey(k.id, i)} className="text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
+                      <Trash2 className="w-4 h-4"/>
+                    </button>
+                  </div>
+                ))}
             </div>
           </section>
           <section>
