@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
+import { useWebSocket } from '@/hooks/useWebSocket'
 import { UserCheck, RefreshCw, Loader2, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -23,6 +24,16 @@ export function Approvals() {
     setLoading(false)
   }
   useEffect(() => { fetchAll() }, [])
+
+  // Maya blocks a background task the moment it needs approval and pushes
+  // this event immediately — refresh right away instead of waiting for a
+  // manual tap, since the task is actively paused waiting on this page.
+  useWebSocket((data: any) => {
+    if (data?.type === 'approval_requested') {
+      setItems(prev => [data.approval, ...prev.filter(a => a.id !== data.approval.id)])
+      toast('Maya needs your approval', { icon: '⚠️' })
+    }
+  })
 
   const changeMode = async (next: string) => {
     try { await api.put('/approval/mode', { mode: next }); setMode(next); toast.success(`Mode: ${next}`) }
