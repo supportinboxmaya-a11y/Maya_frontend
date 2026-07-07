@@ -5,6 +5,17 @@ import { Send, Loader2, ArrowLeft } from 'lucide-react'
 import { StepItem } from '@/components/chat/StepItem'
 import toast from 'react-hot-toast'
 
+function phaseLabel(phase?: string): string {
+  switch (phase) {
+    case 'planning': return 'Planning what to do...'
+    case 'planned': return 'Plan ready, starting execution...'
+    case 'step_start': return 'Running a step...'
+    case 'step_done': return 'Step finished, continuing...'
+    case 'verifying': return 'Double-checking the result...'
+    default: return 'Maya is working on this...'
+  }
+}
+
 export function Chat() {
   const { tasks, activeTaskId, setActiveTask, addTask, updateTask, setTasks } = useTaskStore()
   const [input, setInput] = useState('')
@@ -85,7 +96,7 @@ export function Chat() {
             {(activeTask.status === 'running' || activeTask.status === 'pending') && activeTask.status !== 'waiting_approval' && (
               <div className="card p-4 flex items-center gap-3">
                 <Loader2 className="w-4 h-4 animate-spin text-purple-400"/>
-                <span className="text-sm text-slate-400">Maya is working on this...</span>
+                <span className="text-sm text-slate-400">{phaseLabel((activeTask as any).current_phase)}</span>
               </div>
             )}
 
