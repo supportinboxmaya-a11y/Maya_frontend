@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { agentsAPI, autonomousAPI, brainAPI } from '@/lib/api'
-import { Loader2, Bot, Play, RefreshCw, Network, MessageCircle, Zap } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { agentsAPI, autonomousAPI, brainAPI, taskAPI } from '@/lib/api'
+import { Loader2, Bot, Play, RefreshCw, Network, MessageCircle, Zap, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface AgentRow { name: string; role?: string; skills?: string[]; permissions?: string[]; status?: string; [k: string]: unknown }
@@ -18,6 +18,11 @@ export function Agents() {
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<Record<string, unknown> | null>(null)
 
+  // real multi-agent execution (this is what actually runs Orchestrator.run())
+  const [executing, setExecuting] = useState(false)
+  const [execTask, setExecTask] = useState<any>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const fetchAll = async () => {
     setLoading(true)
     try {
@@ -28,6 +33,7 @@ export function Agents() {
   }
 
   useEffect(() => { fetchAll() }, [])
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
 
   const orchestrate = async () => {
     if (!goal.trim()) return toast.error('Enter a goal first')
@@ -59,6 +65,31 @@ export function Agents() {
     } finally { setRunning(false) }
   }
 
+  const executeMultiAgent = async () => {
+    if (!goal.trim()) return toast.error('Enter a goal first')
+    setExecuting(true); setExecTask(null)
+    try {
+      const res: any = await agentsAPI.run(goal)
+      const taskId = res.task_id
+      pollRef.current = setInterval(async () => {
+        try {
+          const updated: any = await taskAPI.get(taskId)
+          setExecTask(updated)
+          if (updated.status === 'done' || updated.status === 'failed') {
+            if (pollRef.current) clearInterval(pollRef.current)
+            setExecuting(false)
+            toast[updated.status === 'done' ? 'success' : 'error'](
+              updated.status === 'done' ? 'Multi-agent run complete' : (updated.error || 'Run failed'))
+            fetchAll()
+          }
+        } catch { /* keep polling */ }
+      }, 2000)
+    } catch (e: any) {
+      setExecuting(false)
+      toast.error(e?.detail || 'Execution failed — is FLAG_AUTONOMOUS=true set on the backend?')
+    }
+  }
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -66,7 +97,7 @@ export function Agents() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Bot className="w-6 h-6 text-purple-400"/> Agent Command
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">Multi-agent roster, orchestration planning & autonomous runs</p>
+          <p className="text-sm text-slate-400 mt-0.5">Multi-agent roster, orchestration planning & real execution</p>
         </div>
         <button onClick={fetchAll} className="btn-secondary"><RefreshCw className="w-4 h-4"/>Refresh</button>
       </div>
@@ -82,14 +113,42 @@ export function Agents() {
             {planning ? <Loader2 className="w-4 h-4 animate-spin"/> : <Network className="w-4 h-4"/>}
             Plan (no execution)
           </button>
-          <button onClick={runAutonomous} disabled={running} className="btn-primary">
+          <button onClick={executeMultiAgent} disabled={executing} className="btn-primary">
+            {executing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Users className="w-4 h-4"/>}
+            Execute (Multi-Agent)
+          </button>
+          <button onClick={runAutonomous} disabled={running} className="btn-secondary">
             {running ? <Loader2 className="w-4 h-4 animate-spin"/> : <Play className="w-4 h-4"/>}
-            Autonomous Run
+            Autonomous Run (single-agent)
           </button>
         </div>
         <p className="text-xs text-slate-500 flex items-center gap-1">
-          <Zap className="w-3 h-3"/> Autonomous runs require FLAG_AUTONOMOUS=true on the backend.
+          <Zap className="w-3 h-3"/> "Execute" and "Autonomous Run" both require FLAG_AUTONOMOUS=true on the backend.
         </p>
+
+        {execTask && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <span className={`badge text-[10px] ${execTask.status === 'done' ? 'badge-green' : execTask.status === 'failed' ? 'badge-red' : 'badge-blue'}`}>
+                {execTask.current_phase || execTask.status}
+              </span>
+              {executing && <Loader2 className="w-3 h-3 animate-spin text-purple-400"/>}
+            </div>
+            {execTask.steps?.map((s: any) => (
+              <div key={s.step} className={`text-xs rounded-lg p-2 border ${s.success === true ? 'border-emerald-500/30 bg-emerald-500/10' : s.success === false ? 'border-red-500/30 bg-red-500/10' : 'border-blue-500/30 bg-blue-500/10 animate-pulse'}`}>
+                <span className="text-purple-300 font-medium">{s.tool || 'agent'}</span>
+                <span className="text-slate-400"> — {s.description}</span>
+                {s.error && <div className="text-red-400 mt-0.5">{s.error}</div>}
+              </div>
+            ))}
+            {execTask.status === 'done' && (
+              <div className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
+                {execTask.result}
+              </div>
+            )}
+          </div>
+        )}
+
         {plan && (
           <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-x-auto max-h-64">
             {JSON.stringify(plan, null, 2)}

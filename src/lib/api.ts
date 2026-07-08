@@ -167,6 +167,7 @@ export const brainAPI = {
 export const agentsAPI = {
   list: () => api.get("/agents"),
   orchestrate: (goal: string) => api.post("/agents/orchestrate", { goal }),
+  run: (goal: string) => api.post("/agents/run", { goal }),
   messages: (limit = 50) => api.get("/agents/messages", { params: { limit } }),
 }
 
