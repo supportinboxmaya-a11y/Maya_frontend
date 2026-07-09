@@ -175,24 +175,40 @@ export function Agents() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {agents.map(a => (
-                  <div key={a.name} className="card-hover p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-white text-sm">{a.name}</div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/15 text-purple-300">{a.role || 'agent'}</span>
-                    </div>
-                    {a.skills && a.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {a.skills.slice(0, 5).map(s => (
-                          <span key={s} className="px-1.5 py-0.5 rounded text-[10px] bg-[#1a1d2e] text-slate-400">{s}</span>
-                        ))}
+                {agents.map(a => {
+                  const total = (a.ok as number || 0) + (a.errors as number || 0)
+                  const neverRun = total === 0
+                  const status = neverRun ? 'never run' : (a.status as string || 'healthy')
+                  const dotColor = neverRun ? 'bg-slate-600' : status === 'healthy' ? 'bg-emerald-400' : 'bg-red-400'
+                  return (
+                    <div key={a.name} className="card-hover p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium text-white text-sm flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${dotColor}`} title={status}/>
+                          {a.name}
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/15 text-purple-300">{a.role || 'agent'}</span>
                       </div>
-                    )}
-                    {a.permissions && a.permissions.length > 0 && (
-                      <div className="text-[10px] text-slate-500 truncate">perms: {a.permissions.join(', ')}</div>
-                    )}
-                  </div>
-                ))}
+                      {a.skills && (a.skills as string[]).length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {(a.skills as string[]).slice(0, 5).map(s => (
+                            <span key={s} className="px-1.5 py-0.5 rounded text-[10px] bg-[#1a1d2e] text-slate-400">{s}</span>
+                          ))}
+                        </div>
+                      )}
+                      {a.permissions && (a.permissions as string[]).length > 0 && (
+                        <div className="text-[10px] text-slate-500 truncate">perms: {(a.permissions as string[]).join(', ')}</div>
+                      )}
+                      <div className="text-[10px] text-slate-500">
+                        {neverRun ? 'Never assigned a task yet' :
+                          `${a.ok} ok / ${a.errors} error${(a.errors as number) !== 1 ? 's' : ''} (${Math.round((a.success_rate as number || 0) * 100)}%)`}
+                      </div>
+                      {a.last_error && (
+                        <div className="text-[10px] text-red-400 truncate" title={a.last_error as string}>⚠ {a.last_error as string}</div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
