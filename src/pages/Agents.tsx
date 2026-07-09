@@ -4,7 +4,7 @@ import { Loader2, Bot, Play, RefreshCw, Network, MessageCircle, Zap, Users } fro
 import toast from 'react-hot-toast'
 
 interface AgentRow { name: string; role?: string; skills?: string[]; permissions?: string[]; status?: string; [k: string]: unknown }
-interface BusMessage { sender?: string; recipient?: string; content?: string; ts?: string; [k: string]: unknown }
+interface BusMessage { from?: string; to?: string; content?: unknown; ts?: number; [k: string]: unknown }
 
 export function Agents() {
   const [agents, setAgents] = useState<AgentRow[]>([])
@@ -167,7 +167,8 @@ export function Agents() {
         <>
           {/* Agent roster */}
           <div>
-            <h2 className="text-sm font-semibold text-white mb-3">Registered Agents ({agents.length})</h2>
+            <h2 className="text-sm font-semibold text-white">Registered Agents ({agents.length})</h2>
+            <p className="text-xs text-slate-500 mb-3">Reference roster — who's available and what they're allowed to do. Not clickable; agents get assigned automatically when you run a goal above.</p>
             {agents.length === 0 ? (
               <div className="card p-6 text-center text-xs text-slate-500">
                 No agents returned — the multi-agent system may not be loaded on the backend.
@@ -207,10 +208,12 @@ export function Agents() {
               <div className="space-y-1.5 max-h-72 overflow-y-auto">
                 {messages.map((m, i) => (
                   <div key={i} className="text-xs bg-[#0f1117] border border-[#1e2130] rounded-lg p-2.5">
-                    <span className="text-purple-300 font-medium">{m.sender || '?'}</span>
+                    <span className="text-purple-300 font-medium">{m.from || '?'}</span>
                     <span className="text-slate-600"> → </span>
-                    <span className="text-blue-300 font-medium">{m.recipient || '?'}</span>
-                    <div className="text-slate-400 mt-1">{m.content ? String(m.content) : JSON.stringify(m)}</div>
+                    <span className="text-blue-300 font-medium">{m.to || '?'}</span>
+                    <div className="text-slate-400 mt-1">
+                      {typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}
+                    </div>
                   </div>
                 ))}
               </div>
