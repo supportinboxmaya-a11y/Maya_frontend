@@ -1,4 +1,3 @@
-
 import { Bell, Command, Menu, ArrowLeft } from 'lucide-react'
 import { formatCost } from '@/lib/utils'
 import { useNavigate, useLocation } from 'react-router-dom'
