@@ -103,14 +103,8 @@ export const memoryAPI = {
     api.get("/memory/search", { params: { q, limit } }),
   add: (content: string, type = "general") =>
     api.post("/memory", { content, type }),
-  update: (id: string, content: string) => api.put(`/memory/${id}`, { content }),
-  getVersions: (id: string) => api.get(`/memory/${id}/versions`),
   delete: (id: string) => api.delete(`/memory/${id}`),
   stats: () => api.get("/memory/stats"),
-  analytics: () => api.get("/memory/analytics"),
-  cleanup: (dryRun = true) => api.post("/memory/cleanup", null, { params: { dry_run: dryRun } }),
-  compress: (memoryType = "general", keepRecent = 20, dryRun = true) =>
-    api.post("/memory/compress", null, { params: { memory_type: memoryType, keep_recent: keepRecent, dry_run: dryRun } }),
 }
 
 // ── Tools ──────────────────────────────────────
@@ -167,7 +161,6 @@ export const brainAPI = {
 export const agentsAPI = {
   list: () => api.get("/agents"),
   orchestrate: (goal: string) => api.post("/agents/orchestrate", { goal }),
-  run: (goal: string) => api.post("/agents/run", { goal }),
   messages: (limit = 50) => api.get("/agents/messages", { params: { limit } }),
 }
 
