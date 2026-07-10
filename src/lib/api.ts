@@ -74,6 +74,50 @@ export const agentAPI = {
     api.post("/agent/run", { goal, budget_usd }),
   chat: (message: string, chat_id?: string) =>
     api.post("/agent/chat", { message, chat_id }),
+  // Stream a reply token-by-token via SSE. Calls onDelta for each chunk
+  // and resolves when the server signals done. Falls back cleanly: if the
+  // stream endpoint isn't available, the caller can use chat() instead.
+  streamChat: async (
+    message: string,
+    onDelta: (text: string) => void,
+    opts: { chat_id?: string; signal?: AbortSignal } = {}
+  ): Promise<void> => {
+    const token = localStorage.getItem("maya_token")
+    const res = await fetch(`${AGENT_URL}/agent/chat/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ message, chat_id: opts.chat_id }),
+      signal: opts.signal,
+    })
+    if (!res.ok || !res.body) {
+      throw new Error(`stream failed: ${res.status}`)
+    }
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ""
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split("\n\n")
+      buffer = lines.pop() || ""
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith("data:")) continue
+        try {
+          const evt = JSON.parse(trimmed.slice(5).trim())
+          if (evt.delta) onDelta(evt.delta)
+          else if (evt.error) throw new Error(evt.error)
+          // evt.done -> loop will end when the reader is done
+        } catch {
+          // ignore malformed keep-alive lines
+        }
+      }
+    }
+  },
   think: (problem: string, depth = "normal") =>
     api.post("/agent/think", { problem, depth }),
   status: () => api.get("/agent/status"),
