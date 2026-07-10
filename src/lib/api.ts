@@ -107,6 +107,20 @@ export const memoryAPI = {
   stats: () => api.get("/memory/stats"),
 }
 
+// ── Knowledge (RAG) ────────────────────────────
+export const ragAPI = {
+  stats: () => api.get("/rag/stats"),
+  documents: (limit = 200) => api.get("/rag/documents", { params: { limit } }),
+  deleteDocument: (id: string) => api.delete(`/rag/documents/${id}`),
+  ingest: (text: string, title = "untitled", doc_type = "text") =>
+    api.post("/rag/ingest", { text, title, doc_type }),
+  ingestPath: (path: string) => api.post("/rag/ingest", { path }),
+  search: (q: string, limit = 5, mode = "hybrid") =>
+    api.get("/rag/search", { params: { q, limit, mode } }),
+  context: (q: string, limit = 5) =>
+    api.get("/rag/context", { params: { q, limit } }),
+}
+
 // ── Tools ──────────────────────────────────────
 export const toolAPI = {
   list: () => api.get("/tools"),

@@ -10,6 +10,22 @@ export function Voice() {
   const [response, setResponse] = useState('')
   const mediaRef = useRef<MediaRecorder|null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const [ttsText, setTtsText] = useState('')
+  const [speaking, setSpeaking] = useState(false)
+
+  const speak = async (text: string) => {
+    if (!text.trim()) return
+    setSpeaking(true)
+    try {
+      const res = await api.post('/voice/speak', { text }) as any
+      if (res?.audio) {
+        new Audio(`data:audio/${res.format || 'mp3'};base64,${res.audio}`).play()
+      } else if (res?.message) {
+        toast(res.message, { icon: 'ℹ️' })
+      }
+    } catch { toast.error('TTS unavailable — backend offline') }
+    finally { setSpeaking(false) }
+  }
 
   const startRecording = async () => {
     try {
@@ -78,10 +94,25 @@ export function Voice() {
           <div className="flex items-center gap-2 mb-2">
             <Volume2 className="w-4 h-4 text-purple-400"/>
             <div className="text-xs text-slate-500">Maya Response</div>
+            <button onClick={() => speak(response)} disabled={speaking}
+                    className="ml-auto text-xs text-purple-300 hover:text-purple-200 disabled:opacity-50 flex items-center gap-1">
+              {speaking ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Volume2 className="w-3.5 h-3.5"/>}
+              Listen
+            </button>
           </div>
           <div className="text-sm text-slate-200">{response}</div>
         </div>
       )}
+      <div className="card p-4 space-y-2">
+        <div className="text-xs text-slate-500">Text to Speech</div>
+        <textarea value={ttsText} onChange={e => setTtsText(e.target.value)} rows={3}
+                  placeholder="Type text for Maya to speak..." className="input resize-none"/>
+        <button onClick={() => speak(ttsText)} disabled={speaking || !ttsText.trim()}
+                className="btn-primary text-xs gap-1">
+          {speaking ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Volume2 className="w-3.5 h-3.5"/>}
+          Speak
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 export default {
-  dashboard:"ড্যাশবোর্ড", chat:"চ্যাট / কাজ", memory:"মেমরি সেন্টার",
+  dashboard:"ড্যাশবোর্ড", chat:"চ্যাট / কাজ", memory:"মেমরি সেন্টার", knowledge:"নলেজ বেস",
   tools:"টুল ম্যানেজার", analytics:"অ্যানালিটিক্স", cost:"খরচ ও বাজেট",
   workflow:"ওয়ার্কফ্লো বিল্ডার", plugins:"প্লাগইন মার্কেটপ্লেস",
   agents:"এজেন্ট কমান্ড", learning:"লার্নিং সেন্টার",

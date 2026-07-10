@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquare,Brain,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
+import { MessageSquare,Brain,Database,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
@@ -8,6 +8,7 @@ const navSections = [
   {label:'sectionCore',items:[
     {to:'/chat',icon:MessageSquare,label:'chat'},
     {to:'/memory',icon:Brain,label:'memory'},
+    {to:'/knowledge',icon:Database,label:'knowledge'},
     {to:'/tools',icon:Wrench,label:'tools'},
     {to:'/analytics',icon:BarChart3,label:'analytics'},
     {to:'/cost',icon:DollarSign,label:'cost'},

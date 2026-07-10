@@ -4,6 +4,7 @@ import { Auth } from '@/pages/Auth'
 import { Dashboard } from '@/pages/Dashboard'
 import { Chat } from '@/pages/Chat'
 import { Memory } from '@/pages/Memory'
+import { Knowledge } from '@/pages/Knowledge'
 import { Tools } from '@/pages/Tools'
 import { Analytics } from '@/pages/Analytics'
 import { Settings } from '@/pages/Settings'
@@ -43,6 +44,7 @@ export default function App() {
         <Route index element={<Dashboard/>}/>
         <Route path='chat' element={<Chat/>}/>
         <Route path='memory' element={<Memory/>}/>
+        <Route path='knowledge' element={<Knowledge/>}/>
         <Route path='tools' element={<Tools/>}/>
         <Route path='analytics' element={<Analytics/>}/>
         <Route path='cost' element={<Cost/>}/>
