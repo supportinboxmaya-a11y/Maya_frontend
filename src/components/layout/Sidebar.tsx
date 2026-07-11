@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquare,Brain,Database,Zap,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
+import { MessageSquare,Brain,Database,Zap,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText,Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
@@ -16,6 +16,7 @@ const navSections = [
   ]},
   {label:'sectionBuild',items:[
     {to:'/workflow',icon:GitBranch,label:'workflow'},
+    {to:'/scheduler',icon:Clock,label:'scheduler'},
     {to:'/plugins',icon:Puzzle,label:'plugins'},
   ]},
   {label:'sectionIntelligence',items:[

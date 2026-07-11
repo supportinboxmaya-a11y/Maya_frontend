@@ -1,7 +1,7 @@
 export default {
   dashboard:"Dashboard", chat:"Chat / Tasks", memory:"Memory Center", knowledge:"Knowledge Base", liveChat:"Live Chat",
   tools:"Tool Manager", analytics:"Analytics", cost:"Cost & Budget",
-  workflow:"Workflow Builder", plugins:"Plugin Marketplace",
+  workflow:"Workflow Builder", scheduler:"Scheduler", plugins:"Plugin Marketplace",
   agents:"Agent Command", learning:"Learning Center",
   voice:"Voice Studio", vision:"Vision Studio",
   backendOverview:"Backend Overview", logs:"Logs",

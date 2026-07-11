@@ -336,6 +336,16 @@ export const promptAPI = {
     api.post(`/prompts/${id}/render`, { values, run }),
 }
 
+// ── Scheduler (Phase 1: persistent cron-based jobs) ────────────
+export const schedulerAPI = {
+  list: () => api.get("/schedules"),
+  create: (data: { name: string; cron: string; job: string; args?: unknown[]; kwargs?: Record<string, unknown> }) =>
+    api.post("/schedules", data),
+  delete: (id: string) => api.delete(`/schedules/${id}`),
+  setEnabled: (id: string, enabled: boolean) =>
+    api.post(`/schedules/${id}/enabled`, { enabled }),
+}
+
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
   // Derive WS endpoint from the agent URL so production works without extra config

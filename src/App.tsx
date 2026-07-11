@@ -13,6 +13,7 @@ import { Notifications } from '@/pages/Notifications'
 import { Voice } from '@/pages/Voice'
 import { Vision } from '@/pages/Vision'
 import { Workflow } from '@/pages/Workflow'
+import { Scheduler } from '@/pages/Scheduler'
 import { Plugins } from '@/pages/Plugins'
 import { Security } from '@/pages/Security'
 import { BackendOverview } from '@/pages/BackendOverview'
@@ -51,6 +52,7 @@ export default function App() {
         <Route path='analytics' element={<Analytics/>}/>
         <Route path='cost' element={<Cost/>}/>
         <Route path='workflow' element={<Workflow/>}/>
+        <Route path='scheduler' element={<Scheduler/>}/>
         <Route path='agents' element={<Agents/>}/>
         <Route path='learning' element={<Learning/>}/>
         <Route path='admin' element={<AdminPanel/>}/>
