@@ -137,6 +137,7 @@ export const taskAPI = {
   get: (id: string) => api.get(`/tasks/${id}`),
   create: (goal: string) => api.post("/tasks", { goal }),
   delete: (id: string) => api.delete(`/tasks/${id}`),
+  reflect: (id: string, retry = false) => api.post(`/tasks/${id}/reflect`, { retry }),
 }
 
 // ── Memory ─────────────────────────────────────
@@ -322,6 +323,25 @@ export const authAPI = {
 export const workspaceFilesAPI = {
   list: () => api.get("/workspace/files"),
   fetchBlob: (name: string) => api.get(`/workspace/files/${encodeURIComponent(name)}`, { responseType: "blob" }),
+}
+
+// ── Standing Goals / Projects (continuous autonomy) ────────────
+export const projectAPI = {
+  list: () => api.get("/projects"),
+  create: (name: string, goal: string, cron = "@hourly") =>
+    api.post("/projects", { name, goal, cron }),
+  progress: (scheduleId: string) => api.get(`/projects/${scheduleId}/progress`),
+  delete: (scheduleId: string) => api.delete(`/projects/${scheduleId}`),
+}
+
+// ── Device Bridge (paired-desktop GUI control) ──────────────────
+export const deviceAPI = {
+  pairStart: (name: string) => api.post("/device/pair/start", { name }),
+  list: () => api.get("/device/list"),
+  revoke: (deviceId: string) => api.delete(`/device/${deviceId}`),
+  history: (deviceId: string) => api.get(`/device/${deviceId}/history`),
+  enqueue: (deviceId: string, action: string, params: Record<string, unknown> = {}) =>
+    api.post("/device/command", { device_id: deviceId, action, params }),
 }
 
 // ── Notifications (Superpower 8: persisted in-app history) ────

@@ -20,6 +20,8 @@ const Voice = lazy(() => import('@/pages/Voice').then(m => ({ default: m.Voice }
 const Vision = lazy(() => import('@/pages/Vision').then(m => ({ default: m.Vision })))
 const Workflow = lazy(() => import('@/pages/Workflow').then(m => ({ default: m.Workflow })))
 const Scheduler = lazy(() => import('@/pages/Scheduler').then(m => ({ default: m.Scheduler })))
+const Projects = lazy(() => import('@/pages/Projects').then(m => ({ default: m.Projects })))
+const DeviceBridge = lazy(() => import('@/pages/DeviceBridge').then(m => ({ default: m.DeviceBridge })))
 const Plugins = lazy(() => import('@/pages/Plugins').then(m => ({ default: m.Plugins })))
 const Security = lazy(() => import('@/pages/Security').then(m => ({ default: m.Security })))
 const BackendOverview = lazy(() => import('@/pages/BackendOverview').then(m => ({ default: m.BackendOverview })))
@@ -69,6 +71,8 @@ export default function App() {
           <Route path='cost' element={<Cost/>}/>
           <Route path='workflow' element={<Workflow/>}/>
           <Route path='scheduler' element={<Scheduler/>}/>
+          <Route path='projects' element={<Projects/>}/>
+          <Route path='device-bridge' element={<DeviceBridge/>}/>
           <Route path='agents' element={<Agents/>}/>
           <Route path='learning' element={<Learning/>}/>
           <Route path='admin' element={<AdminPanel/>}/>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { agentsAPI, autonomousAPI, brainAPI, taskAPI } from '@/lib/api'
-import { Loader2, Bot, Play, RefreshCw, Network, MessageCircle, Zap, Users } from 'lucide-react'
+import { Loader2, Bot, Play, RefreshCw, Network, MessageCircle, Zap, Users, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface AgentRow { name: string; role?: string; skills?: string[]; permissions?: string[]; status?: string; [k: string]: unknown }
@@ -21,6 +21,8 @@ export function Agents() {
   // real multi-agent execution (this is what actually runs Orchestrator.run())
   const [executing, setExecuting] = useState(false)
   const [execTask, setExecTask] = useState<any>(null)
+  const [reflecting, setReflecting] = useState(false)
+  const [critique, setCritique] = useState<any>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchAll = async () => {
@@ -73,7 +75,7 @@ export function Agents() {
   // shape {id, status, current_phase, steps, result} used below.
   const executeMultiAgent = async () => {
     if (!goal.trim()) return toast.error('Enter a goal first')
-    setExecuting(true); setExecTask(null)
+    setExecuting(true); setExecTask(null); setCritique(null)
     try {
       const res: any = await taskAPI.create(goal)
       const taskId = res.id
@@ -94,6 +96,16 @@ export function Agents() {
       setExecuting(false)
       toast.error(e?.detail || 'Execution failed')
     }
+  }
+
+  const reflect = async () => {
+    if (!execTask?.id) return
+    setReflecting(true)
+    try {
+      const res: any = await taskAPI.reflect(execTask.id, false)
+      setCritique(res.critique)
+    } catch (e: any) { toast.error(e?.detail || 'Reflection failed') }
+    finally { setReflecting(false) }
   }
 
   return (
@@ -150,6 +162,30 @@ export function Agents() {
             {execTask.status === 'done' && (
               <div className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
                 {execTask.result}
+              </div>
+            )}
+            {(execTask.status === 'done' || execTask.status === 'failed') && (
+              <div className="space-y-2">
+                <button onClick={reflect} disabled={reflecting} className="btn-secondary text-xs py-1.5 px-3">
+                  {reflecting ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Sparkles className="w-3.5 h-3.5"/>}
+                  Reflect on this result
+                </button>
+                {critique && (
+                  <div className="text-xs bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400">Self-critique score:</span>
+                      <span className={`font-semibold ${critique.score >= 7 ? 'text-emerald-400' : critique.score >= 4 ? 'text-yellow-400' : 'text-red-400'}`}>{critique.score}/10</span>
+                    </div>
+                    {critique.issues?.length > 0 && (
+                      <ul className="list-disc list-inside text-slate-400">
+                        {critique.issues.map((iss: string, i: number) => <li key={i}>{iss}</li>)}
+                      </ul>
+                    )}
+                    {critique.suggestion && critique.suggestion.toLowerCase() !== 'none' && (
+                      <div className="text-purple-300">Suggestion: {critique.suggestion}</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

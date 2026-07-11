@@ -12,6 +12,8 @@ const pages = [
   { path: '/cost', label: 'Cost & Budget' },
   { path: '/workflow', label: 'Workflow Builder' },
   { path: '/scheduler', label: 'Scheduler' },
+  { path: '/projects', label: 'Projects' },
+  { path: '/device-bridge', label: 'Device Bridge' },
   { path: '/workspaces', label: 'Workspaces' },
   { path: '/agents', label: 'Agent Command' },
   { path: '/learning', label: 'Learning Center' },
