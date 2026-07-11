@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { workflowAPI, workflowDefAPI } from '@/lib/api'
-import { Loader2, Plus, Play, Trash2, X } from 'lucide-react'
+import { workflowAPI, workflowDefAPI, workflowRunAPI } from '@/lib/api'
+import { Loader2, Plus, Play, Trash2, X, GitMerge } from 'lucide-react'
 import type { Workflow as SimpleWorkflow } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -9,13 +9,19 @@ interface WFDef {
   created_at: number; updated_at: number; runs: number
 }
 
+interface TaskNode {
+  id: string; description: string; tool: string | null; agent: string | null
+  depends_on: string[]; state: string; attempts: number; error: string | null
+}
+interface RunState { id: string; goal: string; status: string; created: number; nodes: TaskNode[] }
+
 const STEP_EXAMPLE = `[
   { "id": "step1", "name": "Research", "action": "prompt", "input": "Summarize the latest news about {{input.topic}}" },
   { "id": "step2", "name": "Review", "action": "prompt", "input": "Improve this summary: {{step1.output}}", "depends_on": ["step1"] }
 ]`
 
 export function Workflow() {
-  const [tab, setTab] = useState<'simple' | 'defs'>('simple')
+  const [tab, setTab] = useState<'simple' | 'defs' | 'plans'>('simple')
 
   // ── Simple (legacy) tab ────────────────────────────
   const [workflows, setWorkflows] = useState<SimpleWorkflow[]>([])
@@ -118,13 +124,75 @@ export function Workflow() {
     } catch { toast.error('Delete failed') }
   }
 
+  // ── Resumable plans tab (Phase 6) ───────────────────
+  const [planGoal, setPlanGoal] = useState('')
+  const [planning, setPlanning] = useState(false)
+  const [runIds, setRunIds] = useState<string[]>([])
+  const [runsLoading, setRunsLoading] = useState(true)
+  const [openRun, setOpenRun] = useState<RunState | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
+  const [executingRun, setExecutingRun] = useState<string | null>(null)
+  const [execResult, setExecResult] = useState<any>(null)
+
+  const fetchRunIds = async () => {
+    setRunsLoading(true)
+    try {
+      const res: any = await workflowRunAPI.runs()
+      setRunIds(res?.checkpoints || [])
+    } catch { setRunIds([]) }
+    finally { setRunsLoading(false) }
+  }
+
+  useEffect(() => { if (tab === 'plans') fetchRunIds() }, [tab])
+
+  const createPlan = async () => {
+    if (!planGoal.trim()) return toast.error('Enter a goal first')
+    setPlanning(true)
+    try {
+      const res: any = await workflowRunAPI.plan(planGoal.trim())
+      toast.success('Plan created')
+      setPlanGoal('')
+      setOpenRun(res?.state || null)
+      fetchRunIds()
+    } catch (e: any) { toast.error(e?.detail || 'Planning failed') }
+    finally { setPlanning(false) }
+  }
+
+  const viewRun = async (id: string) => {
+    setExecResult(null)
+    try {
+      const res: any = await workflowRunAPI.state(id)
+      setOpenRun(res)
+    } catch { toast.error('Could not load this run') }
+  }
+
+  const executeRun = async (id: string) => {
+    setExecutingRun(id)
+    setExecResult(null)
+    try {
+      const res: any = await workflowRunAPI.execute(id)
+      setExecResult(res)
+      toast.success(`Run ${res.status}`)
+      fetchRunIds()
+    } catch (e: any) { toast.error(e?.detail || 'Execution failed') }
+    finally { setExecutingRun(null) }
+  }
+
+  const cancelRun = async (id: string) => {
+    setCancelling(id)
+    try {
+      await workflowRunAPI.cancel(id)
+      toast.success('Cancel requested')
+    } catch { toast.error('Not cancellable — the server may have restarted since this was planned') }
+    finally { setCancelling(null) }
+  }
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-white">Workflow Builder</h1>
-        {tab === 'simple'
-          ? <button onClick={() => setCreating(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>
-          : <button onClick={() => setShowDefForm(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
+        {tab === 'simple' && <button onClick={() => setCreating(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
+        {tab === 'defs' && <button onClick={() => setShowDefForm(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
       </div>
 
       <div className="flex gap-2 border-b border-[#1e2130]">
@@ -132,6 +200,8 @@ export function Workflow() {
           className={`px-3 py-2 text-sm ${tab === 'simple' ? 'text-white border-b-2 border-purple-400' : 'text-slate-500'}`}>Simple</button>
         <button onClick={() => setTab('defs')}
           className={`px-3 py-2 text-sm ${tab === 'defs' ? 'text-white border-b-2 border-purple-400' : 'text-slate-500'}`}>Steps (conditions & dependencies)</button>
+        <button onClick={() => setTab('plans')}
+          className={`px-3 py-2 text-sm ${tab === 'plans' ? 'text-white border-b-2 border-purple-400' : 'text-slate-500'}`}>Resumable Plans</button>
       </div>
 
       {tab === 'simple' ? (
@@ -181,7 +251,7 @@ export function Workflow() {
             </div>
           )}
         </>
-      ) : (
+      ) : tab === 'defs' ? (
         <>
           <p className="text-xs text-slate-500">Multi-step workflows with dependencies and conditional branching, defined as JSON. Steps reference each other's output via {'{{step_id.output}}'}.</p>
           {defsLoading ? (
@@ -210,6 +280,73 @@ export function Workflow() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-slate-500">
+            Plans a dependency graph for a goal, checkpoints it, and can execute it (in dependency order, with automatic retry/recovery) — resumable if the server restarts mid-run.
+          </p>
+          <div className="card p-4 space-y-2">
+            <div className="flex gap-2">
+              <input value={planGoal} onChange={e => setPlanGoal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && createPlan()}
+                placeholder="Goal to plan..." className="input flex-1"/>
+              <button onClick={createPlan} disabled={planning} className="btn-primary">
+                {planning ? <Loader2 className="w-4 h-4 animate-spin"/> : <GitMerge className="w-4 h-4"/>}Plan
+              </button>
+            </div>
+          </div>
+
+          {runsLoading ? (
+            <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
+          ) : runIds.length === 0 ? (
+            <div className="text-center text-slate-500 py-16">No plans yet</div>
+          ) : (
+            <div className="space-y-2">
+              {runIds.map(id => (
+                <div key={id} className="card p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <button onClick={() => viewRun(id)} className="text-sm text-slate-300 font-mono truncate flex-1 text-left hover:text-white">{id}</button>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button onClick={() => executeRun(id)} disabled={executingRun === id} className="btn-primary text-xs py-1 px-2">
+                        {executingRun === id ? <Loader2 className="w-3 h-3 animate-spin"/> : <Play className="w-3 h-3"/>}Run
+                      </button>
+                      <button onClick={() => cancelRun(id)} disabled={cancelling === id} className="btn-secondary text-xs py-1 px-2">
+                        {cancelling === id ? <Loader2 className="w-3 h-3 animate-spin"/> : null}Cancel
+                      </button>
+                    </div>
+                  </div>
+                  {executingRun === null && execResult?.run_id === id && (
+                    <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-x-auto max-h-64">{JSON.stringify(execResult, null, 2)}</pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {openRun && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setOpenRun(null)}>
+              <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white truncate">{openRun.goal}</h3>
+                  <button onClick={() => setOpenRun(null)} aria-label="Close"><X className="w-4 h-4 text-slate-400"/></button>
+                </div>
+                <span className="badge badge-default text-[10px]">{openRun.status}</span>
+                <div className="space-y-2">
+                  {openRun.nodes.map(n => (
+                    <div key={n.id} className="p-2 rounded-lg bg-[#0f1117] border border-[#1e2130]">
+                      <div className="flex items-center gap-2">
+                        <span className={`badge text-[10px] ${n.state === 'done' ? 'badge-green' : n.state === 'failed' ? 'badge-red' : 'badge-default'}`}>{n.state}</span>
+                        <span className="text-xs text-slate-300 truncate">{n.description}</span>
+                      </div>
+                      {n.depends_on.length > 0 && <div className="text-[10px] text-slate-600 mt-1">depends on: {n.depends_on.join(', ')}</div>}
+                      {n.error && <div className="text-[10px] text-red-400 mt-1">{n.error}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </>

@@ -234,6 +234,7 @@ export const workflowRunAPI = {
   plan: (goal: string) => api.post("/workflows/plan", { goal }),
   runs: () => api.get("/workflows/runs"),
   state: (runId: string) => api.get(`/workflows/runs/${runId}`),
+  execute: (runId: string) => api.post(`/workflows/runs/${runId}/execute`),
   cancel: (runId: string) => api.post(`/workflows/runs/${runId}/cancel`),
 }
 
