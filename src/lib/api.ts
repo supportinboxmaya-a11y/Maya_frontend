@@ -318,6 +318,12 @@ export const authAPI = {
   refresh: () => api.post("/auth/refresh"),
 }
 
+// ── Workspace files (what tools like browser_screenshot write to disk) ──
+export const workspaceFilesAPI = {
+  list: () => api.get("/workspace/files"),
+  fetchBlob: (name: string) => api.get(`/workspace/files/${encodeURIComponent(name)}`, { responseType: "blob" }),
+}
+
 // ── Notifications (Superpower 8: persisted in-app history) ────
 export const notificationAPI = {
   list: (unread_only = false, limit = 50) =>
