@@ -286,6 +286,11 @@ export const adminAPI = {
   createOrg: (name: string) => api.post("/admin/orgs", { name }),
   deleteOrg: (id: string) => api.delete(`/admin/orgs/${id}`),
   removeMember: (orgId: string, email: string) => api.delete(`/admin/orgs/${orgId}/members/${encodeURIComponent(email)}`),
+  teams: (orgId: string) => api.get(`/admin/orgs/${orgId}/teams`),
+  createTeam: (orgId: string, name: string) => api.post(`/admin/orgs/${orgId}/teams`, { name }),
+  orgMembers: (orgId: string) => api.get(`/admin/orgs/${orgId}/members`),
+  addMember: (orgId: string, email: string, role = "viewer", teamId?: string) =>
+    api.post(`/admin/orgs/${orgId}/members`, { email, role, team_id: teamId }),
   apiKeys: () => api.get("/admin/apikeys"),
   createApiKey: (data: unknown) => api.post("/admin/apikeys", data),
   revokeApiKey: (id: string) => api.delete(`/admin/apikeys/${id}`),
