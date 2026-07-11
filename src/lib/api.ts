@@ -321,6 +321,21 @@ export const notificationAPI = {
   markAllRead: () => api.post("/notifications/read-all"),
 }
 
+// ── Prompt Library (Superpower 9: reusable templates with {{vars}}) ──
+export const promptAPI = {
+  list: (category = "", q = "", limit = 100) =>
+    api.get("/prompts", { params: { category, q, limit } }),
+  get: (id: string) => api.get(`/prompts/${id}`),
+  create: (data: { name: string; body: string; description?: string; category?: string; tags?: string[] }) =>
+    api.post("/prompts", data),
+  update: (id: string, data: { name?: string; body?: string; description?: string; category?: string; tags?: string[] }) =>
+    api.put(`/prompts/${id}`, data),
+  delete: (id: string) => api.delete(`/prompts/${id}`),
+  history: (id: string) => api.get(`/prompts/${id}/history`),
+  render: (id: string, values: Record<string, string> = {}, run = false) =>
+    api.post(`/prompts/${id}/render`, { values, run }),
+}
+
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
   // Derive WS endpoint from the agent URL so production works without extra config
