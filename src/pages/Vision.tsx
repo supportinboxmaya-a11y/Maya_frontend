@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react'
 import { api } from '@/lib/api'
-import { Eye, Upload, Loader2, X } from 'lucide-react'
+import { Eye, FileText, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function Vision() {
   const [image, setImage] = useState<string|null>(null)
   const [result, setResult] = useState<string|null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<'describe' | 'ocr' | null>(null)
   const [prompt, setPrompt] = useState('Describe this image in detail')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -19,12 +19,22 @@ export function Vision() {
 
   const analyze = async () => {
     if (!image) return
-    setLoading(true)
+    setLoading('describe')
     try {
       const res = await api.post('/vision/analyze', { image, prompt }) as any
-      setResult(res?.result || res?.description || JSON.stringify(res))
+      setResult(res?.result || res?.description || res?.message || JSON.stringify(res))
     } catch { toast.error('Vision API unavailable — backend offline') }
-    finally { setLoading(false) }
+    finally { setLoading(null) }
+  }
+
+  const extractText = async () => {
+    if (!image) return
+    setLoading('ocr')
+    try {
+      const res = await api.post('/vision/ocr', { image }) as any
+      setResult(res?.text || res?.message || 'No text found')
+    } catch { toast.error('OCR unavailable — backend offline') }
+    finally { setLoading(null) }
   }
 
   return (
@@ -52,13 +62,19 @@ export function Vision() {
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}/>
       <input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="What do you want to know about this image?" className="input w-full"/>
-      <button onClick={analyze} disabled={!image || loading} className="btn-primary w-full justify-center">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Eye className="w-4 h-4"/>}
-        Analyze Image
-      </button>
+      <div className="flex gap-2">
+        <button onClick={analyze} disabled={!image || loading !== null} className="btn-primary flex-1 justify-center">
+          {loading === 'describe' ? <Loader2 className="w-4 h-4 animate-spin"/> : <Eye className="w-4 h-4"/>}
+          Analyze Image
+        </button>
+        <button onClick={extractText} disabled={!image || loading !== null} className="btn-secondary flex-1 justify-center">
+          {loading === 'ocr' ? <Loader2 className="w-4 h-4 animate-spin"/> : <FileText className="w-4 h-4"/>}
+          Extract Text (OCR)
+        </button>
+      </div>
       {result && (
         <div className="card p-4">
-          <div className="text-xs text-slate-500 mb-2">Analysis Result</div>
+          <div className="text-xs text-slate-500 mb-2">Result</div>
           <div className="text-sm text-slate-200 whitespace-pre-wrap">{result}</div>
         </div>
       )}
