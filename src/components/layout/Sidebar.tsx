@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquare,Brain,Database,Zap,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText,Clock,Layers,Target,MonitorSmartphone } from 'lucide-react'
+import { MessageSquare,Brain,Database,Zap,Languages,Wrench,BarChart3,Settings,Shield,GitBranch,Puzzle,Mic,Eye,Terminal,Bell,Users,DollarSign,Activity,TestTube,ArchiveRestore,Globe,X,Plus,Trash2,LogOut,Bot,GraduationCap,ShieldCheck,UserCheck,Cpu,BookOpenText,Sparkles,FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
@@ -9,17 +9,14 @@ const navSections = [
     {to:'/chat',icon:MessageSquare,label:'chat'},
     {to:'/memory',icon:Brain,label:'memory'},
     {to:'/knowledge',icon:Database,label:'knowledge'},
-    {to:'/workspaces',icon:Layers,label:'workspaces'},
     {to:'/live',icon:Zap,label:'liveChat'},
+    {to:'/translate',icon:Languages,label:'translate'},
     {to:'/tools',icon:Wrench,label:'tools'},
     {to:'/analytics',icon:BarChart3,label:'analytics'},
     {to:'/cost',icon:DollarSign,label:'cost'},
   ]},
   {label:'sectionBuild',items:[
     {to:'/workflow',icon:GitBranch,label:'workflow'},
-    {to:'/scheduler',icon:Clock,label:'scheduler'},
-    {to:'/projects',icon:Target,label:'projects'},
-    {to:'/device-bridge',icon:MonitorSmartphone,label:'deviceBridge'},
     {to:'/plugins',icon:Puzzle,label:'plugins'},
   ]},
   {label:'sectionIntelligence',items:[

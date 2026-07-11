@@ -69,6 +69,13 @@ workerApi.interceptors.response.use(
 )
 
 // ── Agent (Render) ─────────────────────────────
+export const translateAPI = {
+  languages: () => api.get("/translate/languages"),
+  translate: (text: string, target: string, source?: string, speak?: boolean) =>
+    api.post("/translate", { text, target, source, speak }),
+  detect: (text: string) => api.post("/translate/detect", { text }),
+}
+
 export const agentAPI = {
   run: (goal: string, budget_usd?: number) =>
     api.post("/agent/run", { goal, budget_usd }),
