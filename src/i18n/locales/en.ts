@@ -1,5 +1,5 @@
 export default {
-  dashboard:"Dashboard", chat:"Chat / Tasks", memory:"Memory Center", knowledge:"Knowledge Base", liveChat:"Live Chat",
+  dashboard:"Dashboard", chat:"Chat / Tasks", memory:"Memory Center", knowledge:"Knowledge Base", workspaces:"Workspaces", liveChat:"Live Chat",
   tools:"Tool Manager", analytics:"Analytics", cost:"Cost & Budget",
   workflow:"Workflow Builder", scheduler:"Scheduler", plugins:"Plugin Marketplace",
   agents:"Agent Command", learning:"Learning Center",

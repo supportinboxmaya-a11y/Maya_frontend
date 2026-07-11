@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { Chat } from '@/pages/Chat'
 import { Memory } from '@/pages/Memory'
 import { Knowledge } from '@/pages/Knowledge'
+import { Workspaces } from '@/pages/Workspaces'
 import { LiveChat } from '@/components/chat/LiveChat'
 import { Tools } from '@/pages/Tools'
 import { Analytics } from '@/pages/Analytics'
@@ -47,6 +48,7 @@ export default function App() {
         <Route path='chat' element={<Chat/>}/>
         <Route path='memory' element={<Memory/>}/>
         <Route path='knowledge' element={<Knowledge/>}/>
+        <Route path='workspaces' element={<Workspaces/>}/>
         <Route path='live' element={<LiveChat/>}/>
         <Route path='tools' element={<Tools/>}/>
         <Route path='analytics' element={<Analytics/>}/>

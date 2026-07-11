@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
-import { Loader2, Power, Trash2, Puzzle } from 'lucide-react'
+import { api, pluginCodeAPI } from '@/lib/api'
+import { Loader2, Power, Trash2, Puzzle, Plus, X, Code } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface LoadedPlugin {
@@ -11,9 +11,19 @@ interface LoadedPlugin {
   enabled: boolean
 }
 
+const CODE_EXAMPLE = `def register_tools(registry):
+    def hello(name="world"):
+        return f"Hello, {name}!"
+    registry.register("hello", hello, "Says hello", category="general")
+`
+
 export function Plugins() {
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([])
   const [loading, setLoading] = useState(true)
+  const [showInstall, setShowInstall] = useState(false)
+  const [installName, setInstallName] = useState('')
+  const [installCode, setInstallCode] = useState(CODE_EXAMPLE)
+  const [installing, setInstalling] = useState(false)
 
   const fetchPlugins = () => {
     setLoading(true)
@@ -40,15 +50,30 @@ export function Plugins() {
     } catch { toast.error('Failed to delete plugin') }
   }
 
+  const installFromCode = async () => {
+    if (!installName.trim() || !installCode.trim()) return toast.error('Name and code are required')
+    setInstalling(true)
+    try {
+      const res: any = await pluginCodeAPI.installFromCode(installName.trim(), installCode)
+      toast.success(`Installed — registered ${res?.tools?.length || 0} tool(s)`)
+      setShowInstall(false); setInstallName(''); setInstallCode(CODE_EXAMPLE)
+      fetchPlugins()
+    } catch (e: any) { toast.error(e?.detail || 'Install failed — check the code defines register_tools(registry)') }
+    finally { setInstalling(false) }
+  }
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-white flex items-center gap-2"><Puzzle className="w-5 h-5 text-purple-400"/>Plugins</h1>
-        <button onClick={fetchPlugins} className="btn-secondary text-sm">Refresh</button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowInstall(true)} className="btn-primary text-sm"><Plus className="w-4 h-4"/>Install from code</button>
+          <button onClick={fetchPlugins} className="btn-secondary text-sm">Refresh</button>
+        </div>
       </div>
       <p className="text-xs text-slate-500">
-        Plugins are .py files dropped into the server's <code className="text-purple-400">plugins/</code> folder.
-        There's no install-from-catalog yet — this just manages what's already loaded.
+        Plugins are Python code that registers tools. Drop a .py file into the server's <code className="text-purple-400">plugins/</code> folder,
+        or install from source below — code becomes callable immediately, and disabling/deleting retracts its tools.
       </p>
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-purple-400"/></div>
@@ -77,6 +102,26 @@ export function Plugins() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showInstall && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowInstall(false)}>
+          <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Code className="w-4 h-4 text-purple-400"/>Install Plugin From Code</h3>
+              <button onClick={() => setShowInstall(false)}><X className="w-4 h-4 text-slate-400"/></button>
+            </div>
+            <input value={installName} onChange={e => setInstallName(e.target.value)} placeholder="Plugin name" className="input w-full"/>
+            <textarea value={installCode} onChange={e => setInstallCode(e.target.value)} rows={10}
+              className="input w-full resize-none font-mono text-xs"/>
+            <div className="flex gap-2">
+              <button onClick={installFromCode} disabled={installing} className="btn-primary">
+                {installing ? <Loader2 className="w-4 h-4 animate-spin"/> : null}Install
+              </button>
+              <button onClick={() => setShowInstall(false)} className="btn-secondary">Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

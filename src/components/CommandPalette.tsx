@@ -12,6 +12,7 @@ const pages = [
   { path: '/cost', label: 'Cost & Budget' },
   { path: '/workflow', label: 'Workflow Builder' },
   { path: '/scheduler', label: 'Scheduler' },
+  { path: '/workspaces', label: 'Workspaces' },
   { path: '/agents', label: 'Agent Command' },
   { path: '/learning', label: 'Learning Center' },
   { path: '/plugins', label: 'Plugin Marketplace' },

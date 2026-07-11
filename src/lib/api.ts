@@ -346,6 +346,48 @@ export const schedulerAPI = {
     api.post(`/schedules/${id}/enabled`, { enabled }),
 }
 
+// ── Declarative Workflow Builder (#3/6: steps with conditions/deps) ──
+export const workflowDefAPI = {
+  list: () => api.get("/workflows/defs"),
+  get: (id: string) => api.get(`/workflows/defs/${id}`),
+  create: (data: { name: string; steps: unknown[]; description?: string }) =>
+    api.post("/workflows/defs", data),
+  update: (id: string, data: { name?: string; steps?: unknown[]; description?: string }) =>
+    api.put(`/workflows/defs/${id}`, data),
+  delete: (id: string) => api.delete(`/workflows/defs/${id}`),
+  run: (id: string, inputs: Record<string, unknown> = {}) =>
+    api.post(`/workflows/defs/${id}/run`, { inputs }),
+}
+
+// ── Multi-user Workspaces (Superpower 5: personal + team memory) ──
+export const workspaceAPI = {
+  list: () => api.get("/workspaces"),
+  search: (workspace: string, q = "", limit = 20) =>
+    api.get("/workspace/memory", { params: { workspace, q, limit } }),
+  add: (workspace: string, content: string, type = "general", metadata?: Record<string, unknown>) =>
+    api.post("/workspace/memory", { workspace, content, type, metadata }),
+  remove: (workspace: string, id: string) =>
+    api.delete(`/workspace/memory/${id}`, { params: { workspace } }),
+  stats: (workspace: string) => api.get("/workspace/stats", { params: { workspace } }),
+}
+
+// ── Inbound Webhook Triggers (Superpower 7: external -> queue) ──
+export const hookAPI = {
+  list: () => api.get("/hooks"),
+  create: (data: { name: string; job: string; template: string; signed?: boolean }) =>
+    api.post("/hooks", data),
+  delete: (id: string) => api.delete(`/hooks/${id}`),
+  setEnabled: (id: string, enabled: boolean) =>
+    api.post(`/hooks/${id}/enabled`, { enabled }),
+}
+
+// ── Plugin install-from-code (#2/6) ─────────────────────────────
+export const pluginCodeAPI = {
+  installFromCode: (name: string, code: string) =>
+    api.post("/plugins/install-code", { name, code }),
+  tools: (pluginId: string) => api.get(`/plugins/${pluginId}/tools`),
+}
+
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
   // Derive WS endpoint from the agent URL so production works without extra config

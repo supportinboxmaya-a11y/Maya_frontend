@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Globe, Plus, Webhook, Key, CheckCircle2, XCircle, Trash2, Copy } from 'lucide-react'
-import { adminAPI, webhookAPI } from '@/lib/api'
+import { Globe, Plus, Webhook, Key, CheckCircle2, XCircle, Trash2, Zap } from 'lucide-react'
+import { adminAPI, webhookAPI, hookAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 // App connections are client-side preferences (no backend integration endpoints yet).
@@ -16,6 +16,7 @@ const defaultApps = [
 
 interface WebhookRow { id: string; name: string; url: string; events: string[]; active: boolean }
 interface ApiKeyRow { id?: string; name?: string; prefix?: string; created_at?: string; [k: string]: unknown }
+interface HookRow { id: string; name: string; job: string; template: string; signed: boolean; enabled: boolean; fire_count: number; url: string }
 
 export function Integrations() {
   const [integrations, setIntegrations] = useState(() => {
@@ -28,6 +29,12 @@ export function Integrations() {
   const [whName, setWhName] = useState('')
   const [whUrl, setWhUrl] = useState('')
 
+  // Inbound triggers (external service -> Maya)
+  const [hooks, setHooks] = useState<HookRow[]>([])
+  const [addingHook, setAddingHook] = useState(false)
+  const [hkName, setHkName] = useState('')
+  const [hkTemplate, setHkTemplate] = useState('')
+
   useEffect(() => { localStorage.setItem('maya_integrations', JSON.stringify(integrations)) }, [integrations])
 
   const fetchWebhooks = () => {
@@ -39,6 +46,11 @@ export function Integrations() {
     adminAPI.apiKeys().then((d: any) => setApiKeys(d?.keys || (Array.isArray(d) ? d : []))).catch(() => setApiKeys([]))
   }
   useEffect(() => { fetchKeys() }, [])
+
+  const fetchHooks = () => {
+    hookAPI.list().then((d: any) => setHooks(d?.triggers || [])).catch(() => setHooks([]))
+  }
+  useEffect(() => { fetchHooks() }, [])
 
   const toggle = (id: number) =>
     setIntegrations((prev: typeof defaultApps) => prev.map(a => a.id === id ? { ...a, connected: !a.connected } : a))
@@ -92,6 +104,38 @@ export function Integrations() {
     } catch { toast.error('Failed to revoke key') }
   }
 
+  // "agent_goal" is the only registered queue handler by default; the
+  // template's rendered text becomes that job's goal string.
+  const addHook = async () => {
+    if (!hkName.trim() || !hkTemplate.trim()) return toast.error('Name and template are required')
+    try {
+      const res: any = await hookAPI.create({ name: hkName.trim(), job: 'agent_goal', template: hkTemplate.trim(), signed: true })
+      setHkName(''); setHkTemplate(''); setAddingHook(false)
+      fetchHooks()
+      if (res?.secret) {
+        navigator.clipboard?.writeText(res.secret).catch(() => {})
+        toast.success('Trigger created — signing secret copied to clipboard (shown once, store it safely)', { duration: 6000 })
+      } else {
+        toast.success('Trigger created')
+      }
+    } catch (e: any) { toast.error(e?.detail || 'Failed to create trigger') }
+  }
+
+  const deleteHook = async (id: string) => {
+    try {
+      await hookAPI.delete(id)
+      setHooks(prev => prev.filter(h => h.id !== id))
+      toast.success('Trigger deleted')
+    } catch { toast.error('Delete failed') }
+  }
+
+  const toggleHook = async (h: HookRow) => {
+    try {
+      await hookAPI.setEnabled(h.id, !h.enabled)
+      setHooks(prev => prev.map(x => x.id === h.id ? { ...x, enabled: !x.enabled } : x))
+    } catch { toast.error('Update failed') }
+  }
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -127,7 +171,7 @@ export function Integrations() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-white">Webhooks <span className="text-xs text-slate-500 font-normal">(fired by backend on task events)</span></h2>
+          <h2 className="text-sm font-semibold text-white">Webhooks <span className="text-xs text-slate-500 font-normal">(fired BY Maya on task events)</span></h2>
           <button onClick={() => setAddingWebhook(true)} className="btn-secondary text-xs py-1.5 px-3"><Plus className="w-3.5 h-3.5"/>Add Webhook</button>
         </div>
         {addingWebhook && (
@@ -157,6 +201,48 @@ export function Integrations() {
                     <div className="flex gap-1 mt-2">{w.events.map(e=><span key={e} className="badge-purple font-mono text-[10px]">{e}</span>)}</div>
                   </div>
                   <button onClick={()=>deleteWebhook(w.id)} className="text-slate-500 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-white">Inbound Triggers <span className="text-xs text-slate-500 font-normal">(external service -&gt; Maya, e.g. GitHub/Zapier)</span></h2>
+          <button onClick={() => setAddingHook(true)} className="btn-secondary text-xs py-1.5 px-3"><Zap className="w-3.5 h-3.5"/>Add Trigger</button>
+        </div>
+        {addingHook && (
+          <div className="card p-4 mb-3 space-y-2">
+            <input value={hkName} onChange={e=>setHkName(e.target.value)} placeholder="Trigger name..." className="input"/>
+            <input value={hkTemplate} onChange={e=>setHkTemplate(e.target.value)} placeholder="Goal template, e.g. Review issue: {{issue.title}}" className="input font-mono text-xs"/>
+            <p className="text-[11px] text-slate-500">Use {'{{path.to.field}}'} to pull values from the incoming JSON payload. A signing secret is generated and shown once — save it to sign requests from the external service.</p>
+            <div className="flex gap-2">
+              <button onClick={addHook} className="btn-primary text-xs py-1.5">Create Trigger</button>
+              <button onClick={()=>setAddingHook(false)} className="btn-secondary text-xs py-1.5">Cancel</button>
+            </div>
+          </div>
+        )}
+        {hooks.length === 0 && !addingHook ? (
+          <div className="card p-6 text-center text-xs text-slate-500">No inbound triggers yet.</div>
+        ) : (
+          <div className="space-y-3">
+            {hooks.map(h=>(
+              <div key={h.id} className="card-hover p-4">
+                <div className="flex items-start gap-3">
+                  <Zap className="w-4 h-4 text-yellow-400 mt-0.5"/>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-white">{h.name}</span>
+                      <button onClick={()=>toggleHook(h)} className={h.enabled?"badge-green":"badge-default"}>{h.enabled?"Active":"Inactive"}</button>
+                      {h.signed && <span className="badge-purple text-[10px]">signed</span>}
+                    </div>
+                    <div className="text-xs font-mono text-slate-500 truncate">POST {h.url}</div>
+                    <div className="text-xs text-slate-400 mt-1 truncate">{h.template}</div>
+                    <div className="text-[10px] text-slate-600 mt-1">Fired {h.fire_count || 0} time{h.fire_count === 1 ? '' : 's'}</div>
+                  </div>
+                  <button onClick={()=>deleteHook(h.id)} className="text-slate-500 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4"/></button>
                 </div>
               </div>
             ))}
