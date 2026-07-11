@@ -121,6 +121,10 @@ export const agentAPI = {
   think: (problem: string, depth = "normal") =>
     api.post("/agent/think", { problem, depth }),
   status: () => api.get("/agent/status"),
+  // Offline sync: replay a batch of locally-queued actions.
+  syncPush: (actions: Array<Record<string, unknown>>) =>
+    api.post("/sync/push", { actions }),
+  syncTypes: () => api.get("/sync/types"),
 }
 
 // ── Worker (edge) ──────────────────────────────
@@ -137,7 +141,6 @@ export const taskAPI = {
   get: (id: string) => api.get(`/tasks/${id}`),
   create: (goal: string) => api.post("/tasks", { goal }),
   delete: (id: string) => api.delete(`/tasks/${id}`),
-  reflect: (id: string, retry = false) => api.post(`/tasks/${id}/reflect`, { retry }),
 }
 
 // ── Memory ─────────────────────────────────────
@@ -235,7 +238,6 @@ export const workflowRunAPI = {
   plan: (goal: string) => api.post("/workflows/plan", { goal }),
   runs: () => api.get("/workflows/runs"),
   state: (runId: string) => api.get(`/workflows/runs/${runId}`),
-  execute: (runId: string) => api.post(`/workflows/runs/${runId}/execute`),
   cancel: (runId: string) => api.post(`/workflows/runs/${runId}/cancel`),
 }
 
@@ -287,11 +289,6 @@ export const adminAPI = {
   createOrg: (name: string) => api.post("/admin/orgs", { name }),
   deleteOrg: (id: string) => api.delete(`/admin/orgs/${id}`),
   removeMember: (orgId: string, email: string) => api.delete(`/admin/orgs/${orgId}/members/${encodeURIComponent(email)}`),
-  teams: (orgId: string) => api.get(`/admin/orgs/${orgId}/teams`),
-  createTeam: (orgId: string, name: string) => api.post(`/admin/orgs/${orgId}/teams`, { name }),
-  orgMembers: (orgId: string) => api.get(`/admin/orgs/${orgId}/members`),
-  addMember: (orgId: string, email: string, role = "viewer", teamId?: string) =>
-    api.post(`/admin/orgs/${orgId}/members`, { email, role, team_id: teamId }),
   apiKeys: () => api.get("/admin/apikeys"),
   createApiKey: (data: unknown) => api.post("/admin/apikeys", data),
   revokeApiKey: (id: string) => api.delete(`/admin/apikeys/${id}`),
@@ -317,107 +314,6 @@ export const authAPI = {
     api.post("/auth/register", { name, email, password }),
   logout: () => api.post("/auth/logout"),
   refresh: () => api.post("/auth/refresh"),
-}
-
-// ── Workspace files (what tools like browser_screenshot write to disk) ──
-export const workspaceFilesAPI = {
-  list: () => api.get("/workspace/files"),
-  fetchBlob: (name: string) => api.get(`/workspace/files/${encodeURIComponent(name)}`, { responseType: "blob" }),
-}
-
-// ── Standing Goals / Projects (continuous autonomy) ────────────
-export const projectAPI = {
-  list: () => api.get("/projects"),
-  create: (name: string, goal: string, cron = "@hourly") =>
-    api.post("/projects", { name, goal, cron }),
-  progress: (scheduleId: string) => api.get(`/projects/${scheduleId}/progress`),
-  delete: (scheduleId: string) => api.delete(`/projects/${scheduleId}`),
-}
-
-// ── Device Bridge (paired-desktop GUI control) ──────────────────
-export const deviceAPI = {
-  pairStart: (name: string) => api.post("/device/pair/start", { name }),
-  list: () => api.get("/device/list"),
-  revoke: (deviceId: string) => api.delete(`/device/${deviceId}`),
-  history: (deviceId: string) => api.get(`/device/${deviceId}/history`),
-  enqueue: (deviceId: string, action: string, params: Record<string, unknown> = {}) =>
-    api.post("/device/command", { device_id: deviceId, action, params }),
-}
-
-// ── Notifications (Superpower 8: persisted in-app history) ────
-export const notificationAPI = {
-  list: (unread_only = false, limit = 50) =>
-    api.get("/notifications", { params: { unread_only, limit } }),
-  unread: () => api.get("/notifications/unread"),
-  markRead: (id: string) => api.post(`/notifications/${id}/read`),
-  markAllRead: () => api.post("/notifications/read-all"),
-}
-
-// ── Prompt Library (Superpower 9: reusable templates with {{vars}}) ──
-export const promptAPI = {
-  list: (category = "", q = "", limit = 100) =>
-    api.get("/prompts", { params: { category, q, limit } }),
-  get: (id: string) => api.get(`/prompts/${id}`),
-  create: (data: { name: string; body: string; description?: string; category?: string; tags?: string[] }) =>
-    api.post("/prompts", data),
-  update: (id: string, data: { name?: string; body?: string; description?: string; category?: string; tags?: string[] }) =>
-    api.put(`/prompts/${id}`, data),
-  delete: (id: string) => api.delete(`/prompts/${id}`),
-  history: (id: string) => api.get(`/prompts/${id}/history`),
-  render: (id: string, values: Record<string, string> = {}, run = false) =>
-    api.post(`/prompts/${id}/render`, { values, run }),
-}
-
-// ── Scheduler (Phase 1: persistent cron-based jobs) ────────────
-export const schedulerAPI = {
-  list: () => api.get("/schedules"),
-  create: (data: { name: string; cron: string; job: string; args?: unknown[]; kwargs?: Record<string, unknown> }) =>
-    api.post("/schedules", data),
-  delete: (id: string) => api.delete(`/schedules/${id}`),
-  setEnabled: (id: string, enabled: boolean) =>
-    api.post(`/schedules/${id}/enabled`, { enabled }),
-}
-
-// ── Declarative Workflow Builder (#3/6: steps with conditions/deps) ──
-export const workflowDefAPI = {
-  list: () => api.get("/workflows/defs"),
-  get: (id: string) => api.get(`/workflows/defs/${id}`),
-  create: (data: { name: string; steps: unknown[]; description?: string }) =>
-    api.post("/workflows/defs", data),
-  update: (id: string, data: { name?: string; steps?: unknown[]; description?: string }) =>
-    api.put(`/workflows/defs/${id}`, data),
-  delete: (id: string) => api.delete(`/workflows/defs/${id}`),
-  run: (id: string, inputs: Record<string, unknown> = {}) =>
-    api.post(`/workflows/defs/${id}/run`, { inputs }),
-}
-
-// ── Multi-user Workspaces (Superpower 5: personal + team memory) ──
-export const workspaceAPI = {
-  list: () => api.get("/workspaces"),
-  search: (workspace: string, q = "", limit = 20) =>
-    api.get("/workspace/memory", { params: { workspace, q, limit } }),
-  add: (workspace: string, content: string, type = "general", metadata?: Record<string, unknown>) =>
-    api.post("/workspace/memory", { workspace, content, type, metadata }),
-  remove: (workspace: string, id: string) =>
-    api.delete(`/workspace/memory/${id}`, { params: { workspace } }),
-  stats: (workspace: string) => api.get("/workspace/stats", { params: { workspace } }),
-}
-
-// ── Inbound Webhook Triggers (Superpower 7: external -> queue) ──
-export const hookAPI = {
-  list: () => api.get("/hooks"),
-  create: (data: { name: string; job: string; template: string; signed?: boolean }) =>
-    api.post("/hooks", data),
-  delete: (id: string) => api.delete(`/hooks/${id}`),
-  setEnabled: (id: string, enabled: boolean) =>
-    api.post(`/hooks/${id}/enabled`, { enabled }),
-}
-
-// ── Plugin install-from-code (#2/6) ─────────────────────────────
-export const pluginCodeAPI = {
-  installFromCode: (name: string, code: string) =>
-    api.post("/plugins/install-code", { name, code }),
-  tools: (pluginId: string) => api.get(`/plugins/${pluginId}/tools`),
 }
 
 // ── WebSocket ──────────────────────────────────

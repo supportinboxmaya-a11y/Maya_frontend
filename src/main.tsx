@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast"
 import App from "./App"
 import "./styles/globals.css"
 import "./i18n/config"
+import { startAutoSync } from "./lib/offlineSync"
 
 const queryClient = new QueryClient()
 
@@ -25,6 +26,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // When a new version deploys, the new service worker activates immediately
 // (skipWaiting/clients.claim in sw.js) and this reloads the page once to
 // pick it up — no manual update, no app-store/APK reinstall needed.
+// Replay any actions queued while offline, and keep syncing.
+startAutoSync()
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => { /* PWA install is optional, ignore failures */ })
