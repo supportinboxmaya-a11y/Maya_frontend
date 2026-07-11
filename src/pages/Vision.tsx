@@ -48,7 +48,7 @@ export function Vision() {
         {image ? (
           <div className="relative">
             <img src={image} alt="uploaded" className="max-h-48 rounded-lg object-contain"/>
-            <button onClick={e => { e.stopPropagation(); setImage(null); setResult(null) }}
+            <button onClick={e => { e.stopPropagation(); setImage(null); setResult(null) }} aria-label="Remove image"
               className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white">
               <X className="w-3 h-3"/>
             </button>

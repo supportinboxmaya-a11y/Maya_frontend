@@ -124,7 +124,7 @@ export function Scheduler() {
           <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">New Schedule</h3>
-              <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-slate-400"/></button>
+              <button onClick={() => setShowForm(false)} aria-label="Close"><X className="w-4 h-4 text-slate-400"/></button>
             </div>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Schedule name" className="input w-full"/>
             <div>

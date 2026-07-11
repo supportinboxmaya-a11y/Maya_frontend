@@ -109,7 +109,7 @@ export function Prompts() {
         <h1 className="flex items-center gap-2 text-lg font-bold text-white"><BookOpenText className="w-6 h-6 text-purple-400"/>Prompt Library</h1>
         <div className="flex gap-2">
           {tab === 'library' && <button onClick={openCreate} className="btn-primary text-sm"><Plus className="w-4 h-4"/>New Prompt</button>}
-          <button onClick={() => tab === 'library' ? fetchLibrary() : fetchOptimizer()} className="btn-secondary"><RefreshCw className="w-4 h-4"/></button>
+          <button onClick={() => tab === 'library' ? fetchLibrary() : fetchOptimizer()} aria-label="Refresh" className="btn-secondary"><RefreshCw className="w-4 h-4"/></button>
         </div>
       </div>
 
@@ -200,7 +200,7 @@ export function Prompts() {
           <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">{editingId ? 'Edit Prompt' : 'New Prompt'}</h3>
-              <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-slate-400"/></button>
+              <button onClick={() => setShowForm(false)} aria-label="Close"><X className="w-4 h-4 text-slate-400"/></button>
             </div>
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" className="input w-full"/>
             <textarea value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} rows={6}
@@ -224,7 +224,7 @@ export function Prompts() {
           <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Render Prompt</h3>
-              <button onClick={() => setRenderingId(null)}><X className="w-4 h-4 text-slate-400"/></button>
+              <button onClick={() => setRenderingId(null)} aria-label="Close"><X className="w-4 h-4 text-slate-400"/></button>
             </div>
             {Object.keys(renderValues).length === 0 ? (
               <p className="text-xs text-slate-500">No variables — this prompt renders as-is.</p>

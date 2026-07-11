@@ -110,7 +110,7 @@ export function Plugins() {
           <div className="card p-4 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Code className="w-4 h-4 text-purple-400"/>Install Plugin From Code</h3>
-              <button onClick={() => setShowInstall(false)}><X className="w-4 h-4 text-slate-400"/></button>
+              <button onClick={() => setShowInstall(false)} aria-label="Close"><X className="w-4 h-4 text-slate-400"/></button>
             </div>
             <input value={installName} onChange={e => setInstallName(e.target.value)} placeholder="Plugin name" className="input w-full"/>
             <textarea value={installCode} onChange={e => setInstallCode(e.target.value)} rows={10}

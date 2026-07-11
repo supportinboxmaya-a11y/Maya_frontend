@@ -88,7 +88,7 @@ export function Workspaces() {
         <input value={query} onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && fetchMemories()}
           placeholder="Search this workspace..." className="input flex-1"/>
-        <button onClick={fetchMemories} className="btn-secondary px-3"><Search className="w-4 h-4"/></button>
+        <button onClick={fetchMemories} aria-label="Search" className="btn-secondary px-3"><Search className="w-4 h-4"/></button>
         <button onClick={() => setAdding(true)} className="btn-primary"><Plus className="w-4 h-4"/>Add</button>
       </div>
 
@@ -120,7 +120,7 @@ export function Workspaces() {
                   <span className="text-[10px] text-slate-600">{new Date(m.created_at * 1000).toLocaleDateString()}</span>
                 </div>
               </div>
-              <button onClick={() => removeMemory(m.id)} className="text-slate-600 hover:text-red-400 flex-shrink-0"><Trash2 className="w-4 h-4"/></button>
+              <button onClick={() => removeMemory(m.id)} aria-label="Delete memory" className="text-slate-600 hover:text-red-400 flex-shrink-0"><Trash2 className="w-4 h-4"/></button>
             </div>
           ))}
         </div>
