@@ -65,12 +65,18 @@ export function Agents() {
     } finally { setRunning(false) }
   }
 
+  // NOTE: the backend's dedicated multi-agent Orchestrator has a run()
+  // method (agents/orchestrator.py) but it isn't exposed over the API —
+  // only .plan() is (via POST /agents/orchestrate, used by "Plan" above).
+  // Until that endpoint exists, this runs the goal through Maya's normal
+  // task pipeline (POST /tasks), which returns the same pollable task
+  // shape {id, status, current_phase, steps, result} used below.
   const executeMultiAgent = async () => {
     if (!goal.trim()) return toast.error('Enter a goal first')
     setExecuting(true); setExecTask(null)
     try {
-      const res: any = await agentsAPI.run(goal)
-      const taskId = res.task_id
+      const res: any = await taskAPI.create(goal)
+      const taskId = res.id
       pollRef.current = setInterval(async () => {
         try {
           const updated: any = await taskAPI.get(taskId)
@@ -79,14 +85,14 @@ export function Agents() {
             if (pollRef.current) clearInterval(pollRef.current)
             setExecuting(false)
             toast[updated.status === 'done' ? 'success' : 'error'](
-              updated.status === 'done' ? 'Multi-agent run complete' : (updated.error || 'Run failed'))
+              updated.status === 'done' ? 'Run complete' : (updated.error || 'Run failed'))
             fetchAll()
           }
         } catch { /* keep polling */ }
       }, 2000)
     } catch (e: any) {
       setExecuting(false)
-      toast.error(e?.detail || 'Execution failed — is FLAG_AUTONOMOUS=true set on the backend?')
+      toast.error(e?.detail || 'Execution failed')
     }
   }
 
@@ -115,15 +121,15 @@ export function Agents() {
           </button>
           <button onClick={executeMultiAgent} disabled={executing} className="btn-primary">
             {executing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Users className="w-4 h-4"/>}
-            Execute (Multi-Agent)
+            Execute
           </button>
           <button onClick={runAutonomous} disabled={running} className="btn-secondary">
             {running ? <Loader2 className="w-4 h-4 animate-spin"/> : <Play className="w-4 h-4"/>}
-            Autonomous Run (single-agent)
+            Autonomous Run
           </button>
         </div>
         <p className="text-xs text-slate-500 flex items-center gap-1">
-          <Zap className="w-3 h-3"/> "Execute" and "Autonomous Run" both require FLAG_AUTONOMOUS=true on the backend.
+          <Zap className="w-3 h-3"/> "Execute" runs Maya's standard task pipeline. "Autonomous Run" requires FLAG_AUTONOMOUS=true on the backend.
         </p>
 
         {execTask && (
