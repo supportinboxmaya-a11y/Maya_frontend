@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toolAPI, workspaceFilesAPI } from '@/lib/api'
-import { Loader2, RefreshCw, Play, X, Globe, MousePointerClick, Keyboard, Camera, Search, FileText } from 'lucide-react'
+import { Loader2, RefreshCw, Play, X, Globe, MousePointerClick, Keyboard, Camera, Search, FileText, Eye, HelpCircle } from 'lucide-react'
 import type { Tool } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -127,6 +127,7 @@ function BrowserControlPanel() {
   const [selector, setSelector] = useState('')
   const [text, setText] = useState('')
   const [query, setQuery] = useState('')
+  const [instruction, setInstruction] = useState('')
   const [output, setOutput] = useState<string | null>(null)
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -190,6 +191,17 @@ function BrowserControlPanel() {
           {busy === 'screenshot' ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Camera className="w-3.5 h-3.5"/>}Screenshot
         </button>
       </div>
+
+      <div className="flex gap-2">
+        <input value={instruction} onChange={e => setInstruction(e.target.value)} placeholder="Describe an element or ask a question about the page..." className="input flex-1 text-sm"/>
+        <button onClick={() => run('browser_click_visually', { instruction }, 'visual-click')} disabled={!instruction || busy !== null} className="btn-secondary text-xs py-1.5 px-3">
+          {busy === 'visual-click' ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Eye className="w-3.5 h-3.5"/>}Click it
+        </button>
+        <button onClick={() => run('browser_look', { question: instruction }, 'look')} disabled={!instruction || busy !== null} className="btn-secondary text-xs py-1.5 px-3">
+          {busy === 'look' ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <HelpCircle className="w-3.5 h-3.5"/>}Look
+        </button>
+      </div>
+      <p className="text-[11px] text-slate-600 -mt-1">Vision-guided fallback for when there's no reliable CSS selector — screenshots the page and asks the vision model. "Click it" needs an element description; "Look" answers a free-form question about what's visible.</p>
 
       {output !== null && (
         <pre className="text-xs text-slate-300 bg-[#0f1117] border border-[#1e2130] rounded-lg p-3 overflow-x-auto whitespace-pre-wrap max-h-64">{output}</pre>
