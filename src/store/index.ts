@@ -3,12 +3,13 @@ import type { Notification, Task, CostSummary } from "@/types"
 
 export const useAgentStore = create<{status:string;currentGoal:string|null;setStatus:(s:string)=>void;setCurrentGoal:(g:string|null)=>void}>((set)=>({status:"idle",currentGoal:null,setStatus:(status)=>set({status}),setCurrentGoal:(currentGoal)=>set({currentGoal})}))
 
-export const useNotificationStore = create<{notifications:Notification[];unreadCount:number;addNotification:(n:Notification)=>void;markAllRead:()=>void;clearAll:()=>void}>((set)=>({
+export const useNotificationStore = create<{notifications:Notification[];unreadCount:number;addNotification:(n:Notification)=>void;markAllRead:()=>void;clearAll:()=>void;setUnreadCount:(n:number)=>void}>((set)=>({
   notifications:[],
   unreadCount:0,
   addNotification:(n)=>set(s=>({notifications:[n,...s.notifications].slice(0,100),unreadCount:s.unreadCount+1})),
   markAllRead:()=>set(s=>({notifications:s.notifications.map(n=>({...n,read:true})),unreadCount:0})),
   clearAll:()=>set({notifications:[],unreadCount:0}),
+  setUnreadCount:(unreadCount)=>set({unreadCount}),
 }))
 
 export const useUIStore = create<{sidebarCollapsed:boolean;commandPaletteOpen:boolean;toggleSidebar:()=>void;setCommandPalette:(open:boolean)=>void}>((set)=>({sidebarCollapsed:false,commandPaletteOpen:false,toggleSidebar:()=>set(s=>({sidebarCollapsed:!s.sidebarCollapsed})),setCommandPalette:(commandPaletteOpen)=>set({commandPaletteOpen})}))

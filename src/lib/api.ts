@@ -312,6 +312,15 @@ export const authAPI = {
   refresh: () => api.post("/auth/refresh"),
 }
 
+// ── Notifications (Superpower 8: persisted in-app history) ────
+export const notificationAPI = {
+  list: (unread_only = false, limit = 50) =>
+    api.get("/notifications", { params: { unread_only, limit } }),
+  unread: () => api.get("/notifications/unread"),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post("/notifications/read-all"),
+}
+
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
   // Derive WS endpoint from the agent URL so production works without extra config

@@ -5,11 +5,12 @@ import { TopBar } from './TopBar'
 import { CommandPalette } from '@/components/CommandPalette'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useNotificationStore, useTaskStore, useCostStore } from '@/store'
-import { analyticsAPI } from '@/lib/api'
+import { analyticsAPI, notificationAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 export function Layout() {
   const addNotification = useNotificationStore(s => s.addNotification)
+  const setUnreadCount = useNotificationStore(s => s.setUnreadCount)
   const updateTask = useTaskStore(s => s.updateTask)
   const setCostSummary = useCostStore(s => s.setCostSummary)
 
@@ -43,7 +44,12 @@ export function Layout() {
     }
   })
 
-  useEffect(() => { refreshCost() }, [])
+  useEffect(() => {
+    refreshCost()
+    notificationAPI.unread().then((r: any) => {
+      if (typeof r?.unread === 'number') setUnreadCount(r.unread)
+    }).catch(() => {})
+  }, [])
 
   return (
     <div style={{display:'flex', height:'100dvh', width:'100vw', maxWidth:'100vw', overflow:'hidden', background:'#0a0b0f'}}>
