@@ -1,3 +1,5 @@
+import { MayaErrorBoundary } from "@/components/maya/MayaErrorBoundary"
+import { AppShell } from "@/components/maya/AppShell"
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { Auth } from '@/pages/Auth'
@@ -41,6 +43,7 @@ function PrivateRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/next" element={<MayaErrorBoundary><AppShell /></MayaErrorBoundary>} />
       <Route path='/auth' element={<Auth/>}/>
       <Route path='/' element={<PrivateRoute><Layout/></PrivateRoute>}>
         <Route index element={<Dashboard/>}/>

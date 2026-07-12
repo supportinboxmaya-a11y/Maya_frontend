@@ -396,3 +396,6 @@ export const hookAPI = {
   create: (data: Record<string, unknown>) => api.post("/hooks", data),
   delete: (id: string) => api.delete(`/hooks/${id}`),
 }
+
+
+// added helpers

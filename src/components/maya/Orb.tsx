@@ -1,0 +1,3 @@
+export function Orb({ size = 40, alive = false, ring = false }: { size?: number; alive?: boolean; ring?: boolean }) {
+  return (<div className="m-orb" style={{ width: size, height: size }}><div className={`m-orb ${alive ? "alive" : ""}`} style={{ width: size, height: size, position: "absolute", inset: 0 }} />{ring && <div className="m-spin" style={{ position: "absolute", inset: -4, borderRadius: 9999, border: "2px solid transparent", borderTopColor: "rgba(255,255,255,.7)" }} />}<div style={{ position: "absolute", inset: "22%", borderRadius: 9999, background: "rgba(255,255,255,.85)", mixBlendMode: "soft-light" }} /></div>)
+}

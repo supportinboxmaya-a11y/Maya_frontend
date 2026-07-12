@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "react-hot-toast"
 import App from "./App"
 import "./styles/globals.css"
+import "./styles/maya.css"
 import "./i18n/config"
 import { startAutoSync } from "./lib/offlineSync"
 
 const queryClient = new QueryClient()
 
-document.documentElement.classList.add('dark')
+//dark-off
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
