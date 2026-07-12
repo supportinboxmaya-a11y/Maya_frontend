@@ -338,3 +338,61 @@ export function createWebSocket(onMessage: (data: unknown) => void) {
 
   return ws
 }
+
+
+// ── Notifications (added to satisfy Layout.tsx; uses existing /notifications) ──
+export const notificationAPI = {
+  unread: () => api.get("/notifications", { params: { unread: true } }),
+  list: (params?: { limit?: number }) => api.get("/notifications", { params }),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post("/notifications/read-all"),
+}
+
+
+// ── Added to satisfy existing pages (additive; uses existing backend routes) ──
+export const schedulerAPI = {
+  list: () => api.get("/schedules"),
+  create: (data: Record<string, unknown>) => api.post("/schedules", data),
+  delete: (id: string) => api.delete(`/schedules/${id}`),
+}
+export const workflowDefAPI = {
+  list: () => api.get("/workflows/defs"),
+  get: (id: string) => api.get(`/workflows/defs/${id}`),
+  create: (data: Record<string, unknown>) => api.post("/workflows/defs", data),
+}
+export const pluginCodeAPI = {
+  install: (code: string, name?: string) => api.post("/plugins/install-code", { code, name }),
+  tools: (id: string) => api.get(`/plugins/${id}/tools`),
+}
+export const workspaceFilesAPI = {
+  list: (path?: string) => api.get("/workspace/files", { params: { path } }),
+  read: (path: string) => api.get("/workspace/files/read", { params: { path } }),
+  write: (path: string, content: string) => api.post("/workspace/files/write", { path, content }),
+}
+export const projectAPI = {
+  list: () => api.get("/projects"),
+  create: (data: Record<string, unknown>) => api.post("/projects", data),
+  get: (id: string) => api.get(`/projects/${id}`),
+  delete: (id: string) => api.delete(`/projects/${id}`),
+}
+export const deviceAPI = {
+  list: () => api.get("/device"),
+  status: () => api.get("/device/status"),
+  send: (data: Record<string, unknown>) => api.post("/device/send", data),
+}
+export const promptAPI = {
+  list: () => api.get("/prompts"),
+  create: (data: Record<string, unknown>) => api.post("/prompts", data),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/prompts/${id}`, data),
+  delete: (id: string) => api.delete(`/prompts/${id}`),
+}
+export const workspaceAPI = {
+  list: () => api.get("/workspaces"),
+  create: (data: Record<string, unknown>) => api.post("/workspaces", data),
+  delete: (id: string) => api.delete(`/workspaces/${id}`),
+}
+export const hookAPI = {
+  list: () => api.get("/hooks"),
+  create: (data: Record<string, unknown>) => api.post("/hooks", data),
+  delete: (id: string) => api.delete(`/hooks/${id}`),
+}
