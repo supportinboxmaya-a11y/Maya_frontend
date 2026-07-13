@@ -1,3 +1,4 @@
+
 import toast from 'react-hot-toast'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Mic, Plus, Check, X, Wrench, Loader2, ShieldAlert, ArrowUp } from 'lucide-react'
@@ -10,6 +11,32 @@ type Approval = { id: string; action?: string; reason?: string; risk_level?: str
 type Msg = { role: 'user' | 'assistant'; content: string; time: string }
 
 const now = () => new Date().toLocaleTimeString()
+const extractText = (v: any): string => {
+  if (v == null) return ''
+  if (typeof v === 'string') return v
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  if (typeof v === 'object') {
+    if (typeof v.output === 'string' && v.output.trim()) return v.output.trim()
+    if (typeof v.result === 'string' && v.result.trim()) return v.result.trim()
+    if (typeof v.reply === 'string' && v.reply.trim()) return v.reply.trim()
+    if (typeof v.message === 'string' && v.message.trim()) return v.message.trim()
+    if (typeof v.text === 'string' && v.text.trim()) return v.text.trim()
+    if (typeof v.content === 'string' && v.content.trim()) return v.content.trim()
+    if (typeof v.answer === 'string' && v.answer.trim()) return v.answer.trim()
+    if (v.result && typeof v.result === 'object') { const inner = extractText(v.result); if (inner) return inner }
+    if (typeof v.error === 'string' && v.error.trim()) return '⚠️ ' + v.error.trim()
+    try { return JSON.stringify(v, null, 2) } catch { return String(v) }
+  }
+  return String(v)
+}
+const lastStepText = (t: any): string => {
+  const steps = (t?.steps || []) as any[]
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const txt = extractText(steps[i]?.result)
+    if (txt && txt !== '{}') return txt
+  }
+  return ''
+}
 const stepState = (s: Step): 'done' | 'failed' | 'running' =>
   s.error || s.success === false ? 'failed' : (s.success === true || (s.result && s.result.length > 0)) ? 'done' : 'running'
 
@@ -117,9 +144,16 @@ export function Dashboard() {
   const finish = useCallback((t: Task | null, errText?: string) => {
     if (finalized.current) return
     finalized.current = true
-    const text = errText
-      ? errText
-      : (t?.status === 'failed' ? ('⚠️ ' + (t?.error || 'Stopped before finishing.')) : (t?.result || 'Done.'))
+    let text: string
+    if (errText) {
+      text = errText
+    } else {
+      let out = extractText((t as any)?.result)
+      if (!out || out === '{}') out = lastStepText(t)
+      if (!out && t?.error) out = '⚠️ ' + t.error
+      if (!out && t?.status === 'failed') out = '⚠️ The task stopped early. Try rephrasing, or ask me to continue.'
+      text = out || 'Done.'
+    }
     setMessages(prev => [...prev, { role: 'assistant', content: text, time: now() }])
     setBusy(false)
     setTask(null)
@@ -163,8 +197,8 @@ export function Dashboard() {
       if (t?.steps) {
         setTask(t)
         if (t.status === 'done' || t.status === 'failed') finish(t)
-      } else if (res?.result || res?.reply || res?.message) {
-        finish(null, res.result || res.reply || res.message)
+      } else if (res && (res.result || res.reply || res.message || res.output || res.success !== undefined)) {
+        finish(null, extractText(res))
       }
     } catch (e: any) {
       const st = e?.status || e?.response?.status
