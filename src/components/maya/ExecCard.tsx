@@ -1,3 +1,4 @@
+
 import { Check, X, Shield, Wrench, Zap } from "lucide-react"
 import { Orb } from "./Orb"
 import { stepStatus, type AgentTask, type AgentApproval } from "@/lib/agentLive"
@@ -7,12 +8,32 @@ function SI({ s }: { s: "done"|"failed"|"running" }) {
   if (s === "failed") return <span className="rounded-full flex items-center justify-center" style={{ ...b, background: "rgba(239,68,68,.16)" }}><X size={13} style={{ color: "#EF4444" }} /></span>
   return <span className="m-spin" style={{ ...b, borderRadius: 999, border: "2px solid var(--border)", borderTopColor: "var(--accent)" }} />
 }
+// Pull any user-facing deliverables (live links, downloadable files) out of
+// the step results so they can be shown to everyone — not just admins — as
+// clickable links / downloads instead of buried truncated text.
+function extractDeliverables(steps: AgentTask["steps"]) {
+  const links = new Set<string>()
+  const files = new Set<string>()
+  const urlRe = /https?:\/\/[^\s"')]+/g
+  const fileRe = /[^\s"'`]+\.(?:zip|apk|pdf|csv|xlsx|png|jpg|zip)\b/gi
+  for (const s of steps || []) {
+    const text = s?.result != null ? String(s.result) : ""
+    if (!text) continue
+    for (const m of text.match(urlRe) || []) links.add(m.replace(/[.,)]+$/, ""))
+    for (const m of text.match(fileRe) || []) { if (!/^https?:/i.test(m)) files.add(m) }
+  }
+  return { links: [...links], files: [...files] }
+}
+
 export function ExecCard({ task, approval, admin, onApprove, onReject }: { task: AgentTask; approval: AgentApproval|null; admin: boolean; onApprove: () => void; onReject: () => void }) {
   const fin = task.status === "done" || task.status === "failed"; const steps = task.steps || []
+  const deliverables = task.status === "done" ? extractDeliverables(steps) : { links: [], files: [] }
+  const hasDeliverables = deliverables.links.length > 0 || deliverables.files.length > 0
   return (<div className="m-rise" style={{ marginLeft: 42 }}><div className="m-card m-shadow" style={{ overflow: "hidden" }}>
     <div className="flex items-center gap-2.5 px-4 py-3 m-bd-b"><Orb size={20} alive={!fin} /><div className="flex-1 min-w-0"><div className="text-[12px] m-muted">{task.status === "done" ? "Completed" : task.status === "failed" ? "Stopped" : task.current_phase || "Working on"}</div><div className="text-sm font-medium m-ink truncate">{task.goal}</div></div>{admin && typeof task.cost_usd === "number" && <div className="flex items-center gap-1 m-sunken rounded-full px-2.5 py-1 text-[11px]"><Zap size={11} className="m-accent" /><span className="m-ink m-mono">${task.cost_usd.toFixed(3)}</span></div>}</div>
     <div className="p-2">{steps.length === 0 && <div className="flex gap-3 px-2 py-2.5 items-center"><span className="m-spin" style={{ width: 22, height: 22, borderRadius: 999, border: "2px solid var(--border)", borderTopColor: "var(--accent)" }} /><span className="text-sm m-muted">Starting…</span></div>}
     {steps.map((s, i) => { const st = stepStatus(s); return (<div key={i} className="flex gap-3 px-2 py-2.5 m-rise"><SI s={st} /><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="text-sm font-medium m-ink">{s.title || s.description || `Step ${s.step ?? i + 1}`}</span>{admin && s.tool && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}><Wrench size={11} />{s.tool}</span>}</div>{s.description && s.title && <div className="text-[12px] m-muted mt-0.5">{s.description}</div>}{admin && s.result && <div className="text-[12px] m-muted mt-0.5 m-mono" style={{ whiteSpace: "pre-wrap" }}>{String(s.result).slice(0, 240)}</div>}{s.error && <div className="text-[12px] mt-0.5" style={{ color: "#EF4444" }}>{s.error}</div>}</div></div>) })}
+    {hasDeliverables && <div className="mx-2 my-2 rounded-xl p-3" style={{ background: "var(--accent-soft)", border: "1px solid var(--accent)" }}><div className="text-[13px] m-ink font-medium mb-2 flex items-center gap-1.5"><Zap size={14} className="m-accent" />Your result is ready</div><div className="flex flex-wrap gap-2">{deliverables.links.map((url, i) => (<a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer" className="m-accent-bg rounded-lg px-3 py-2 text-[13px] font-semibold m-press m-focus" style={{ textDecoration: "none" }}>Open live site ↗</a>))}{deliverables.files.map((f, i) => (<a key={`f${i}`} href={f} download className="m-sunken m-bd rounded-lg px-3 py-2 text-[13px] font-medium m-ink m-press m-focus" style={{ textDecoration: "none" }}>Download {f.split("/").pop()}</a>))}</div></div>}
     {approval && <div className="mx-2 my-2 rounded-xl p-3" style={{ background: "rgba(245,158,11,.10)", border: "1px solid rgba(245,158,11,.3)" }}><div className="text-[13px] m-ink font-medium mb-1 flex items-center gap-1.5"><Shield size={14} style={{ color: "#F59E0B" }} />Maya needs approval to continue</div>{(approval.action || approval.reason) && <div className="text-[12px] m-muted mb-2">{approval.action}{approval.action && approval.reason ? " — " : ""}{approval.reason}{admin && approval.risk_level ? `  ·  risk: ${approval.risk_level}` : ""}</div>}<div className="flex gap-2"><button onClick={onApprove} className="m-accent-bg rounded-lg px-4 py-2 text-[13px] font-semibold m-press m-focus">Approve</button><button onClick={onReject} className="m-sunken m-bd rounded-lg px-4 py-2 text-[13px] font-medium m-ink m-press m-focus">Deny</button></div></div>}</div>
     {admin && fin && <div className="m-bd-t px-4 py-2.5 flex items-center gap-2 text-[11px] m-muted flex-wrap">{typeof task.tokens_used === "number" && <><span className="m-mono">{task.tokens_used.toLocaleString()} tokens</span><span>·</span></>}{typeof task.cost_usd === "number" && <><span className="m-mono">${task.cost_usd.toFixed(3)}</span><span>·</span></>}{task.provider_used && <span>via {task.provider_used}</span>}</div>}
   </div></div>)
