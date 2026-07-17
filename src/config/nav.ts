@@ -1,7 +1,13 @@
-import { Home, MessageSquare, ListTodo, FolderClosed, Wrench, Settings2, Brain, Database, Users, Sparkles, Workflow, Puzzle, FileText, Volume2, Eye, BarChart3, Zap, Shield, HardDrive, Boxes } from "lucide-react"
+import { Home, MessageSquare, ListTodo, Activity, User, Brain, Database, Users, Sparkles, Workflow, Puzzle, FileText, Volume2, Eye, BarChart3, Zap, Shield, HardDrive, Boxes } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 export interface Dest { id: string; label: string; icon: LucideIcon; path: string }
-export const PRIMARY_NAV: Dest[] = [{ id:"home",label:"Home",icon:Home,path:"/" },{ id:"chat",label:"Maya Chat",icon:MessageSquare,path:"/chat" },{ id:"tasks",label:"Tasks",icon:ListTodo,path:"/tasks" },{ id:"files",label:"Files",icon:FolderClosed,path:"/files" },{ id:"tools",label:"Tools",icon:Wrench,path:"/tools" },{ id:"settings",label:"Settings",icon:Settings2,path:"/settings" }]
+export const PRIMARY_NAV: Dest[] = [
+  { id:"home",     label:"Home",     icon:Home,          path:"/" },
+  { id:"tasks",    label:"Tasks",    icon:ListTodo,      path:"/tasks" },
+  { id:"chat",     label:"Ask",      icon:MessageSquare, path:"/chat" },
+  { id:"activity", label:"Activity", icon:Activity,      path:"/activity" },
+  { id:"profile",  label:"Profile",  icon:User,          path:"/profile" },
+]
 export const ADVANCED: { g: string; items: Dest[] }[] = [
   { g:"Intelligence", items:[{ id:"memory",label:"Memory",icon:Brain,path:"/memory" },{ id:"knowledge",label:"Knowledge",icon:Database,path:"/knowledge" },{ id:"agents",label:"Agents",icon:Users,path:"/agents" },{ id:"learning",label:"Learning",icon:Sparkles,path:"/learning" }] },
   { g:"Build", items:[{ id:"workflow",label:"Workflows",icon:Workflow,path:"/workflow" },{ id:"plugins",label:"Plugins",icon:Puzzle,path:"/plugins" },{ id:"prompts",label:"Prompts",icon:FileText,path:"/prompts" }] },
