@@ -6,6 +6,7 @@ import { useRole } from "@/hooks/useRole"
 import { Orb } from "./Orb"
 import { LiveConnection } from "@/components/live/LiveConnection"
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { Home } from "@/pages/maya/Home"
 import { Chat } from "@/pages/maya/Chat"
 import { Tasks } from "@/pages/maya/Tasks"
@@ -128,24 +129,24 @@ export function AppShell() {
 
         <main className="flex-1 overflow-y-auto m-hide-sb" style={{ paddingBottom: 76 }}>
           <Routes>
-            <Route index element={<Home />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="chat" element={<Chat admin={isAdmin} />} />
-            <Route path="activity" element={<Activity />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="control/*" element={<RequireAdmin><Control /></RequireAdmin>} />
-            <Route path="memory" element={<Memory />} />
-            <Route path="knowledge" element={<Knowledge />} />
-            <Route path="learning" element={<Learning />} />
-            <Route path="workflow" element={<Workflow />} />
-            <Route path="prompts" element={<Prompts />} />
-            <Route path="voice" element={<Voice />} />
-            <Route path="vision" element={<Vision />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="cost" element={<Cost />} />
-            <Route path="security" element={<Security />} />
-            <Route path="backup" element={<Backup />} />
-            <Route path="integrations" element={<Integrations />} />
+            <Route index element={<ErrorBoundary name="Home"><Home /></ErrorBoundary>} />
+            <Route path="tasks" element={<ErrorBoundary name="Tasks"><Tasks /></ErrorBoundary>} />
+            <Route path="chat" element={<ErrorBoundary name="Chat"><Chat admin={isAdmin} /></ErrorBoundary>} />
+            <Route path="activity" element={<ErrorBoundary name="Activity"><Activity /></ErrorBoundary>} />
+            <Route path="profile" element={<ErrorBoundary name="Profile"><Profile /></ErrorBoundary>} />
+            <Route path="control/*" element={<RequireAdmin><ErrorBoundary name="Control"><Control /></ErrorBoundary></RequireAdmin>} />
+            <Route path="memory" element={<ErrorBoundary name="Memory"><Memory /></ErrorBoundary>} />
+            <Route path="knowledge" element={<ErrorBoundary name="Knowledge"><Knowledge /></ErrorBoundary>} />
+            <Route path="learning" element={<ErrorBoundary name="Learning"><Learning /></ErrorBoundary>} />
+            <Route path="workflow" element={<ErrorBoundary name="Workflow"><Workflow /></ErrorBoundary>} />
+            <Route path="prompts" element={<ErrorBoundary name="Prompts"><Prompts /></ErrorBoundary>} />
+            <Route path="voice" element={<ErrorBoundary name="Voice"><Voice /></ErrorBoundary>} />
+            <Route path="vision" element={<ErrorBoundary name="Vision"><Vision /></ErrorBoundary>} />
+            <Route path="analytics" element={<ErrorBoundary name="Analytics"><Analytics /></ErrorBoundary>} />
+            <Route path="cost" element={<ErrorBoundary name="Cost"><Cost /></ErrorBoundary>} />
+            <Route path="security" element={<ErrorBoundary name="Security"><Security /></ErrorBoundary>} />
+            <Route path="backup" element={<ErrorBoundary name="Backup"><Backup /></ErrorBoundary>} />
+            <Route path="integrations" element={<ErrorBoundary name="Integrations"><Integrations /></ErrorBoundary>} />
           </Routes>
         </main>
       </div>

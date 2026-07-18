@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Moon, Sun, LogOut, Bell, ChevronRight, Trash2, Check, Send } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Card, Skeleton } from "@/components/maya/ui"
@@ -31,7 +31,7 @@ function useProfileData() {
 
   const unreadQuery = useQuery({
     queryKey: ["notifications", "unread"],
-    queryFn: () => notificationAPI.unread() as unknown as Promise<Notification[]>,
+    queryFn: () => notificationAPI.unread() as unknown as Promise<{ notifications?: Notification[] }>,
     staleTime: 15_000,
     retry: 1,
   })
@@ -56,14 +56,19 @@ export function Profile() {
   const [showAllNotifs, setShowAllNotifs] = useState(false)
 
   const notifications = useNotificationStore((s) => s.notifications)
+  const addNotification = useNotificationStore((s) => s.addNotification)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
   const clearAll = useNotificationStore((s) => s.clearAll)
-  const addNotification = useNotificationStore((s) => s.addNotification)
 
-  // Load unread into store on fetch
-  if (unreadQuery.data && notifications.length === 0) {
-    unreadQuery.data.forEach((n) => addNotification(n))
-  }
+  // Load unread notifications into store — wrapped in useEffect to avoid
+  // render-time side effects, and safely unwrapped from the API response shape.
+  useEffect(() => {
+    if (!unreadQuery.data) return
+    const list = (unreadQuery.data as any)?.notifications || unreadQuery.data
+    if (Array.isArray(list) && notifications.length === 0) {
+      list.forEach((n: Notification) => addNotification(n))
+    }
+  }, [unreadQuery.data, notifications.length, addNotification])
 
   const user = userQuery.data
   const analytics = analyticsQuery.data
@@ -105,6 +110,8 @@ export function Profile() {
         <div className="flex-1 min-w-0">
           {userQuery.isLoading ? (
             <Skeleton h={20} w="60%" />
+          ) : userQuery.error ? (
+            <div className="text-sm m-muted">Could not load profile.</div>
           ) : (
             <>
               <h1 className="m-display text-xl font-semibold m-ink">{user?.name || user?.email || "User"}</h1>
@@ -229,15 +236,16 @@ export function Profile() {
 }
 
 function NotificationIcon({ type }: { type: Notification["type"] }) {
-  const cls = {
+  const colors: Record<string, { bg: string; color: string }> = {
     success: { bg: "rgba(16,185,129,.15)", color: "#10B981" },
     error: { bg: "rgba(239,68,68,.16)", color: "#EF4444" },
     warning: { bg: "rgba(245,158,11,.15)", color: "#F59E0B" },
     info: { bg: "rgba(99,102,241,.12)", color: "var(--accent)" },
-  }[type]
+  }
+  const c = colors[type] || colors.info
   return (
-    <span className="rounded-full flex items-center justify-center" style={{ width: 28, height: 28, background: cls.bg, flexShrink: 0 }}>
-      <Bell size={14} style={{ color: cls.color }} />
+    <span className="rounded-full flex items-center justify-center" style={{ width: 28, height: 28, background: c.bg, flexShrink: 0 }}>
+      <Bell size={14} style={{ color: c.color }} />
     </span>
   )
 }

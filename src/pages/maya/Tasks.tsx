@@ -1,4 +1,5 @@
-import { ListTodo, Check, X, ArrowLeft, Trash2, RefreshCw } from "lucide-react"
+import { useState } from "react"
+import { ListTodo, Check, X, ArrowLeft, Trash2, RefreshCw, XCircle } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Card, Skeleton } from "@/components/maya/ui"
@@ -35,6 +36,9 @@ export function Tasks() {
     retry: 2,
   })
 
+  const cancelTask = useLiveStore((s) => s.cancelTask)
+  const [cancelling, setCancelling] = useState(false)
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => taskAPI.delete(id),
     onSuccess: () => {
@@ -43,6 +47,17 @@ export function Tasks() {
     },
     onError: () => toast.error("Failed to delete task"),
   })
+
+  const handleCancelRunning = async (id: string) => {
+    setCancelling(true)
+    try {
+      await cancelTask(id)
+      toast.success("Task cancelled")
+    } catch {
+      toast.error("Cancel failed")
+    }
+    setCancelling(false)
+  }
 
   const tasks: AgentTask[] = data ? data.map((t) => liveTasks[t.id] || t) : Object.values(liveTasks)
   const selected = selectedId ? tasks.find((t) => t.id === selectedId) || liveTasks[selectedId] : null
@@ -66,6 +81,17 @@ export function Tasks() {
               {isAdmin && typeof selected.tokens_used === "number" && <><span>·</span><span>{selected.tokens_used.toLocaleString()} tokens</span></>}
             </div>
           </div>
+          {selected.status === "running" && (
+            <button
+              onClick={() => handleCancelRunning(selected.id)}
+              disabled={cancelling}
+              className="m-press m-focus rounded-xl px-3 py-2 text-[12px] font-medium flex items-center gap-1.5"
+              style={{ color: "#EF4444", background: "rgba(239,68,68,.08)" }}
+            >
+              <XCircle size={15} />
+              {cancelling ? "…" : "Cancel"}
+            </button>
+          )}
           <button
             onClick={() => { deleteMutation.mutate(selected.id); setSearchParams({}) }}
             className="m-press m-focus rounded-xl p-2 m-muted hover:bg-[var(--sunken)]"
