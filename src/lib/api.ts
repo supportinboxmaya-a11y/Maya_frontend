@@ -308,6 +308,11 @@ export const adminAPI = {
   users: () => api.get("/admin/users"),
   banUser: (id: string, banned: boolean) => api.put(`/admin/users/${id}/ban`, { banned }),
   setUserBudget: (id: string, budget_usd: number) => api.put(`/admin/users/${id}/budget`, { budget_usd }),
+  teams: (orgId: string) => api.get(`/admin/orgs/${orgId}/teams`),
+  orgMembers: (orgId: string) => api.get(`/admin/orgs/${orgId}/members`),
+  createTeam: (orgId: string, name: string) => api.post(`/admin/orgs/${orgId}/teams`, { name }),
+  addMember: (orgId: string, email: string, role: string) =>
+    api.post(`/admin/orgs/${orgId}/members`, { email, role }),
 }
 
 // ── Current user (multi-user mode) ─────────────
@@ -362,7 +367,12 @@ export function createWebSocket(onMessage: (data: unknown) => void) {
 // ── Notifications (added to satisfy Layout.tsx; uses existing /notifications) ──
 export const notificationAPI = {
   unread: () => api.get("/notifications", { params: { unread: true } }),
-  list: (params?: { limit?: number }) => api.get("/notifications", { params }),
+  list: (unreadOrParams?: boolean | { limit?: number }, limit?: number) => {
+    if (typeof unreadOrParams === 'boolean') {
+      return api.get("/notifications", { params: { unread: unreadOrParams || undefined, limit } })
+    }
+    return api.get("/notifications", { params: unreadOrParams })
+  },
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
   send: (userId: string, title: string, message: string, type = "info") =>
@@ -389,6 +399,7 @@ export const workflowDefAPI = {
 }
 export const pluginCodeAPI = {
   install: (code: string, name?: string) => api.post("/plugins/install-code", { code, name }),
+  installFromCode: (name: string, code: string) => api.post("/plugins/install-code", { code, name }),
   tools: (id: string) => api.get(`/plugins/${id}/tools`),
 }
 export const workspaceFilesAPI = {
@@ -411,6 +422,8 @@ export const deviceAPI = {
   pairComplete: (code: string) => api.post("/device/pair/complete", { code }),
   command: (deviceId: string, action: string, params?: Record<string, unknown>) =>
     api.post("/device/command", { device_id: deviceId, action, params }),
+  revoke: (id: string) => api.delete(`/device/${id}`),
+  history: (id: string) => api.get(`/device/${id}/history`),
 }
 export const promptAPI = {
   list: (params?: { category?: string; q?: string }) =>

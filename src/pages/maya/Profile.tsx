@@ -64,14 +64,65 @@ export function Profile() {
   // render-time side effects, and safely unwrapped from the API response shape.
   useEffect(() => {
     if (!unreadQuery.data) return
-    const list = (unreadQuery.data as any)?.notifications || unreadQuery.data
-    if (Array.isArray(list) && notifications.length === 0) {
-      list.forEach((n: Notification) => addNotification(n))
+    let list: Notification[] = []
+    if (Array.isArray(unreadQuery.data)) {
+      list = unreadQuery.data
+    } else {
+      const maybe = (unreadQuery.data as any)?.notifications
+      if (Array.isArray(maybe)) list = maybe
+    }
+    if (list.length > 0 && notifications.length === 0) {
+      list.forEach((n: Notification) => { try { addNotification(n) } catch { /* skip malformed */ } })
     }
   }, [unreadQuery.data, notifications.length, addNotification])
 
   const user = userQuery.data
   const analytics = analyticsQuery.data
+
+  // Top-level loading guard — prevents render on queries that haven't settled
+  if (userQuery.isLoading && analyticsQuery.isLoading && unreadQuery.isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 m-rise">
+        <div className="flex items-center gap-4 mb-8">
+          <Skeleton w={52} h={52} round />
+          <div className="flex-1 space-y-2"><Skeleton h={20} w="60%" /><Skeleton h={14} w="35%" /></div>
+        </div>
+        <div className="mb-6">
+          <Skeleton h={16} w="15%" className="mb-3" />
+          <div className="p-4 space-y-3"><Skeleton h={20} /><Skeleton h={20} /><Skeleton h={20} /></div>
+        </div>
+        <div className="mb-6">
+          <Skeleton h={16} w="25%" className="mb-3" />
+          <div className="p-4 space-y-3"><Skeleton h={48} /><Skeleton h={48} /></div>
+        </div>
+        <Skeleton h={52} />
+      </div>
+    )
+  }
+
+  // Top-level error guard — any query staying in error with no data means
+  // something fundamental is broken (network / auth), show one retry.
+  if (
+    !userQuery.isLoading && userQuery.error &&
+    !analyticsQuery.isLoading && analyticsQuery.error
+  ) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 m-rise flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="m-card p-6 max-w-md text-center">
+          <h2 className="m-display text-lg font-semibold m-ink mb-2">Could not load profile</h2>
+          <p className="text-sm m-muted mb-4">
+            {(userQuery.error as any)?.message || "Check your connection and try again."}
+          </p>
+          <button
+            onClick={() => { userQuery.refetch(); analyticsQuery.refetch(); unreadQuery.refetch() }}
+            className="m-accent-bg rounded-xl px-4 py-2 text-[13px] font-semibold m-press m-focus"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const handleTheme = () => {
     const next: Theme = theme === "dark" ? "light" : "dark"
