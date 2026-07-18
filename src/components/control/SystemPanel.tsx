@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
-import { Activity, Zap, Clock, Database } from "lucide-react"
+import { Activity, Zap, Clock, Database, RefreshCw, ChevronDown, ChevronRight } from "lucide-react"
 import { Card } from "@/components/maya/ui"
-import { systemAPI, llmAPI } from "@/lib/api"
+import { systemAPI, llmAPI, syncAPI, healthAPI, memoryPlusAPI, ragAPI } from "@/lib/api"
 import { StatusDot } from "@/components/ui/StatusDot"
 
 const SERVICES = [
@@ -27,23 +27,60 @@ export function SystemPanel() {
   const [queue, setQueue] = useState<any>(null)
   const [llmStats, setLlmStats] = useState<any>(null)
 
+  // Health probes
+  const [healthLive, setHealthLive] = useState<boolean | null>(null)
+  const [healthReady, setHealthReady] = useState<boolean | null>(null)
+
+  // Sync
+  const [syncStatus, setSyncStatus] = useState<any>(null)
+  const [syncRecent, setSyncRecent] = useState<any[]>([])
+  const [showSync, setShowSync] = useState(false)
+
+  // Memory summary
+  const [memSummary, setMemSummary] = useState<any>(null)
+  const [showMem, setShowMem] = useState(false)
+
+  // RAG context
+  const [ragCtx, setRagCtx] = useState<any[]>([])
+  const [showRag, setShowRag] = useState(false)
+
   const fetchAll = async () => {
-    try {
-      const [m, f, q, l] = await Promise.allSettled([
-        systemAPI.metrics(),
-        systemAPI.flags(),
-        systemAPI.queueStatus(),
-        llmAPI.stats(),
-      ])
-      if (m.status === "fulfilled") setMetrics(m.value)
-      if (f.status === "fulfilled") setFlags(f.value)
-      if (q.status === "fulfilled") setQueue(q.value)
-      if (l.status === "fulfilled") {
-        const data = l.value as any
-        setLlmStats(data?.stats || data)
-      }
-    } catch {
-      // ignore
+    const [m, f, q, l, hl, hr, ss, sr, ms, rc] = await Promise.allSettled([
+      systemAPI.metrics(),
+      systemAPI.flags(),
+      systemAPI.queueStatus(),
+      llmAPI.stats(),
+      healthAPI.live(),
+      healthAPI.ready(),
+      syncAPI.status(),
+      syncAPI.recent(10),
+      memoryPlusAPI.summary(),
+      ragAPI.context("latest", 5),
+    ])
+    if (m.status === "fulfilled") setMetrics(m.value)
+    if (f.status === "fulfilled") setFlags(f.value)
+    if (q.status === "fulfilled") setQueue(q.value)
+    if (l.status === "fulfilled") {
+      const data = l.value as any
+      setLlmStats(data?.stats || data)
+    }
+    if (hl.status === "fulfilled") {
+      const d = hl.value as any
+      setHealthLive(d?.status === "ok" || d?.healthy !== false)
+    } else { setHealthLive(false) }
+    if (hr.status === "fulfilled") {
+      const d = hr.value as any
+      setHealthReady(d?.status === "ok" || d?.healthy !== false)
+    } else { setHealthReady(false) }
+    if (ss.status === "fulfilled") setSyncStatus(ss.value)
+    if (sr.status === "fulfilled") {
+      const d = sr.value as any
+      setSyncRecent(d?.entries || d?.recent || [])
+    }
+    if (ms.status === "fulfilled") setMemSummary(ms.value)
+    if (rc.status === "fulfilled") {
+      const d = rc.value as any
+      setRagCtx(d?.results || d?.context || [])
     }
   }
 
@@ -78,6 +115,24 @@ export function SystemPanel() {
           </Card>
         ))}
       </div>
+
+      {/* Kubernetes health probes */}
+      <Card className="p-4 flex items-center gap-4">
+        <h3 className="text-[15px] font-semibold m-ink">Kubernetes Health</h3>
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-2 text-[13px] m-muted">
+            <StatusDot status={healthLive === true ? "online" : healthLive === false ? "error" : "offline"} />
+            /health/live
+          </span>
+          <span className="flex items-center gap-2 text-[13px] m-muted">
+            <StatusDot status={healthReady === true ? "online" : healthReady === false ? "error" : "offline"} />
+            /health/ready
+          </span>
+        </div>
+        <button onClick={fetchAll} className="m-press m-focus rounded-xl p-1.5 m-muted ml-auto">
+          <RefreshCw size={14} />
+        </button>
+      </Card>
 
       {/* Service Health */}
       <div>
@@ -154,6 +209,83 @@ export function SystemPanel() {
           <pre className="text-[12px] m-muted m-sunken m-bd rounded-lg p-3 overflow-auto max-h-48">{JSON.stringify(queue, null, 2)}</pre>
         </Card>
       )}
+
+      {/* ── Sync Status ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowSync(!showSync)} className="flex items-center gap-2 w-full text-left">
+          {showSync ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <RefreshCw size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">Sync Status</span>
+        </button>
+        {showSync && (
+          <div className="mt-3 space-y-3">
+            {syncStatus && (
+              <div className="m-sunken m-bd rounded-xl p-3 text-[12px]">
+                <pre className="m-mono m-muted">{JSON.stringify(syncStatus, null, 2)}</pre>
+              </div>
+            )}
+            {syncRecent.length > 0 && (
+              <div>
+                <div className="text-[12px] font-medium m-ink mb-1">Recent syncs</div>
+                <div className="space-y-1">
+                  {syncRecent.map((e, i) => (
+                    <div key={i} className="text-[12px] m-sunken m-bd rounded-lg px-3 py-2">
+                      <span className="m-ink">{e.action || e.type}</span>
+                      <span className="m-muted ml-2">{e.status}</span>
+                      {e.ts && <span className="m-faint ml-2">{String(e.ts).slice(0, 19)}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!syncStatus && syncRecent.length === 0 && (
+              <div className="text-[12px] m-muted">No sync data available.</div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Memory Summary ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowMem(!showMem)} className="flex items-center gap-2 w-full text-left">
+          {showMem ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Database size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">Memory Summary</span>
+        </button>
+        {showMem && (
+          <div className="mt-3">
+            {!memSummary ? (
+              <div className="text-[12px] m-muted">No memory summary available.</div>
+            ) : (
+              <pre className="text-[12px] m-muted m-sunken m-bd rounded-xl p-3 overflow-auto max-h-48 m-mono">{JSON.stringify(memSummary, null, 2)}</pre>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* ── RAG Context ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowRag(!showRag)} className="flex items-center gap-2 w-full text-left">
+          {showRag ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Database size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">RAG Context</span>
+        </button>
+        {showRag && (
+          <div className="mt-3 space-y-2">
+            {ragCtx.length === 0 ? (
+              <div className="text-[12px] m-muted">No recent context matches.</div>
+            ) : (
+              ragCtx.map((c, i) => (
+                <div key={i} className="text-[12px] m-sunken m-bd rounded-xl p-3">
+                  <div className="font-medium m-ink">{c.title || c.doc_id || `Match ${i + 1}`}</div>
+                  {c.content && <div className="m-muted mt-0.5 truncate">{String(c.content).slice(0, 120)}</div>}
+                  {c.score != null && <div className="text-[11px] m-faint mt-0.5">Score: {typeof c.score === "number" ? c.score.toFixed(3) : c.score}</div>}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   )
 }

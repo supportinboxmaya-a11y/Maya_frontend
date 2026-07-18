@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom"
-import { Gauge, Radio, Users, Wrench, Cpu, Flag, UserCheck, Activity, Building2 } from "lucide-react"
+import { Gauge, Radio, Users, Wrench, Cpu, Flag, UserCheck, Activity, Building2, MonitorSmartphone, Layers } from "lucide-react"
 import { LivePanel } from "@/components/control/LivePanel"
 import { AgentsPanel } from "@/components/control/AgentsPanel"
 import { ToolsPanel } from "@/components/control/ToolsPanel"
@@ -8,6 +8,8 @@ import { FlagsPanel } from "@/components/control/FlagsPanel"
 import { ApprovalsPanel } from "@/components/control/ApprovalsPanel"
 import { SystemPanel } from "@/components/control/SystemPanel"
 import { OrgPanel } from "@/components/control/OrgPanel"
+import { DevicePanel } from "@/components/control/DevicePanel"
+import { WorkspacePanel } from "@/components/control/WorkspacePanel"
 
 const TABS = [
   { id: "live",      label: "Live",      icon: Radio },
@@ -16,6 +18,8 @@ const TABS = [
   { id: "providers", label: "Providers", icon: Cpu },
   { id: "flags",     label: "Flags",     icon: Flag },
   { id: "approvals", label: "Approvals", icon: UserCheck },
+  { id: "devices",   label: "Devices",   icon: MonitorSmartphone },
+  { id: "workspace", label: "Workspace", icon: Layers },
   { id: "system",    label: "System",    icon: Activity },
   { id: "org",       label: "Org",       icon: Building2 },
 ] as const
@@ -29,6 +33,8 @@ const PANELS: Record<TabId, React.FC> = {
   providers: ProvidersPanel,
   flags: FlagsPanel,
   approvals: ApprovalsPanel,
+  devices: DevicePanel,
+  workspace: WorkspacePanel,
   system: SystemPanel,
   org: OrgPanel,
 }

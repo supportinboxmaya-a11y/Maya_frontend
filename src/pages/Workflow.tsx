@@ -74,6 +74,7 @@ export function Workflow() {
   const [defsLoading, setDefsLoading] = useState(true)
   const [defRunning, setDefRunning] = useState<string | null>(null)
   const [showDefForm, setShowDefForm] = useState(false)
+  const [editDefId, setEditDefId] = useState<string | null>(null)
   const [defName, setDefName] = useState('')
   const [defDesc, setDefDesc] = useState('')
   const [defSteps, setDefSteps] = useState(STEP_EXAMPLE)
@@ -96,11 +97,24 @@ export function Workflow() {
     try { steps = JSON.parse(defSteps) }
     catch { return toast.error('Steps must be valid JSON') }
     try {
-      await workflowDefAPI.create({ name: defName.trim(), steps, description: defDesc.trim() })
-      toast.success('Workflow created')
-      setShowDefForm(false); setDefName(''); setDefDesc(''); setDefSteps(STEP_EXAMPLE)
+      if (editDefId) {
+        await workflowDefAPI.update(editDefId, { name: defName.trim(), steps, description: defDesc.trim() })
+        toast.success('Workflow updated')
+      } else {
+        await workflowDefAPI.create({ name: defName.trim(), steps, description: defDesc.trim() })
+        toast.success('Workflow created')
+      }
+      setShowDefForm(false); setEditDefId(null); setDefName(''); setDefDesc(''); setDefSteps(STEP_EXAMPLE)
       fetchDefs()
     } catch (e: any) { toast.error(e?.detail || 'Invalid workflow — check step ids/dependencies') }
+  }
+
+  const editDef = (w: WFDef) => {
+    setEditDefId(w.id)
+    setDefName(w.name)
+    setDefDesc(w.description || '')
+    setDefSteps(JSON.stringify(w.steps, null, 2))
+    setShowDefForm(true)
   }
 
   const runDef = async (id: string) => {
@@ -192,7 +206,7 @@ export function Workflow() {
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-white">Workflow Builder</h1>
         {tab === 'simple' && <button onClick={() => setCreating(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
-        {tab === 'defs' && <button onClick={() => setShowDefForm(true)} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
+        {tab === 'defs' && <button onClick={() => { setShowDefForm(true); setEditDefId(null); setDefName(''); setDefDesc(''); setDefSteps(STEP_EXAMPLE) }} className="btn-primary"><Plus className="w-4 h-4"/>New Workflow</button>}
       </div>
 
       <div className="flex gap-2 border-b border-[#1e2130]">
@@ -272,6 +286,7 @@ export function Workflow() {
                       <button onClick={() => runDef(w.id)} disabled={defRunning === w.id} className="btn-primary py-1.5 px-3 text-xs">
                         {defRunning === w.id ? <Loader2 className="w-3 h-3 animate-spin"/> : <Play className="w-3 h-3"/>}Run
                       </button>
+                      <button onClick={() => editDef(w)} className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors" title="Edit"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                       <button onClick={() => deleteDef(w.id)} className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4"/></button>
                     </div>
                   </div>

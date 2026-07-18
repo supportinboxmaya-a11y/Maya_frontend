@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react"
-import { Wrench, RefreshCw, Play, X } from "lucide-react"
+import { Wrench, RefreshCw, Play, X, ChevronDown, ChevronRight, BarChart3, Package } from "lucide-react"
 import { Card, Skeleton } from "@/components/maya/ui"
-import { toolAPI } from "@/lib/api"
+import { toolAPI, toolFrameworkAPI, analyticsAPI, pluginCodeAPI } from "@/lib/api"
 import type { Tool } from "@/types"
 import toast from "react-hot-toast"
 
 export function ToolsPanel() {
   const [tools, setTools] = useState<Tool[]>([])
   const [loading, setLoading] = useState(true)
+  const [frameworks, setFrameworks] = useState<any[]>([])
+  const [toolAnalytics, setToolAnalytics] = useState<any[]>([])
+  const [showFw, setShowFw] = useState(false)
+  const [showTa, setShowTa] = useState(false)
+  const [showPt, setShowPt] = useState(false)
+  const [fwLoading, setFwLoading] = useState(false)
+  const [taLoading, setTaLoading] = useState(false)
+  const [fwExecName, setFwExecName] = useState("")
+  const [fwExecInputs, setFwExecInputs] = useState("{}")
+  const [fwExecResult, setFwExecResult] = useState<string | null>(null)
+  const [fwExecuting, setFwExecuting] = useState(false)
+  const [pluginTools, setPluginTools] = useState<Record<string, any[]>>({})
+  const [pluginToolsLoading, setPluginToolsLoading] = useState(false)
 
   // Run modal
   const [runTool, setRunTool] = useState<Tool | null>(null)
@@ -29,7 +42,47 @@ export function ToolsPanel() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchTools() }, [])
+  const fetchFrameworks = async () => {
+    setFwLoading(true)
+    try {
+      const data: any = await toolFrameworkAPI.list()
+      setFrameworks(data?.tools || data || [])
+    } catch { setFrameworks([]) }
+    setFwLoading(false)
+  }
+
+  const fetchToolAnalytics = async () => {
+    setTaLoading(true)
+    try {
+      const data: any = await analyticsAPI.tools()
+      setToolAnalytics(data?.tools || data || [])
+    } catch { setToolAnalytics([]) }
+    setTaLoading(false)
+  }
+
+  const fetchPluginTools = async () => {
+    setPluginToolsLoading(true)
+    try {
+      const res: any = await (await import("@/lib/api")).api.get("/plugins")
+      const pList: any[] = res?.plugins || []
+      const pt: Record<string, any[]> = {}
+      for (const p of pList) {
+        try {
+          const t: any = await pluginCodeAPI.tools(p.id || p.name)
+          pt[p.id || p.name] = t?.tools || []
+        } catch { pt[p.id || p.name] = [] }
+      }
+      setPluginTools(pt)
+    } catch { /* no plugins */ }
+    setPluginToolsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchTools()
+    fetchFrameworks()
+    fetchToolAnalytics()
+    fetchPluginTools()
+  }, [])
 
   const toggle = async (tool: Tool) => {
     const id = tool.name
@@ -73,6 +126,23 @@ export function ToolsPanel() {
       toast.error(e?.detail || "Tool run failed")
     }
     setRunning(false)
+  }
+
+  const fwExecute = async () => {
+    if (!fwExecName.trim()) return
+    let inputs: Record<string, unknown>
+    try { inputs = JSON.parse(fwExecInputs) }
+    catch { toast.error("Inputs must be valid JSON"); return }
+    setFwExecuting(true)
+    setFwExecResult(null)
+    try {
+      const res: any = await toolFrameworkAPI.execute(fwExecName.trim(), inputs)
+      setFwExecResult(typeof res === "string" ? res : JSON.stringify(res, null, 2))
+      toast.success("Executed")
+    } catch (e: any) {
+      toast.error(e?.detail || "Execute failed")
+    }
+    setFwExecuting(false)
   }
 
   return (
@@ -162,6 +232,113 @@ export function ToolsPanel() {
           </div>
         </div>
       )}
+
+      {/* ── Framework section ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowFw(!showFw)} className="flex items-center gap-2 w-full text-left">
+          {showFw ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Wrench size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">Tool Framework</span>
+          {!fwLoading && <span className="text-[11px] m-muted">({frameworks.length})</span>}
+        </button>
+        {showFw && (
+          <div className="mt-3 space-y-3">
+            {fwLoading ? (
+              <Skeleton h={48} />
+            ) : frameworks.length === 0 ? (
+              <div className="text-[12px] m-muted">No framework tools registered.</div>
+            ) : (
+              frameworks.map((fw, i) => (
+                <div key={i} className="m-sunken m-bd rounded-xl p-3 text-[12px]">
+                  <div className="font-medium m-ink">{fw.name}</div>
+                  {fw.description && <div className="m-muted mt-0.5">{fw.description}</div>}
+                </div>
+              ))
+            )}
+            {/* Framework execute */}
+            <div className="m-bd rounded-xl p-3 space-y-2">
+              <div className="text-[12px] font-medium m-ink">Execute</div>
+              <input value={fwExecName} onChange={e => setFwExecName(e.target.value)}
+                placeholder="Tool name" className="w-full m-sunken m-bd rounded-xl px-3 py-1.5 text-[12px] m-ink outline-none" />
+              <textarea value={fwExecInputs} onChange={e => setFwExecInputs(e.target.value)}
+                rows={2} placeholder='{"key": "value"}' className="w-full m-sunken m-bd rounded-xl p-2 text-[12px] m-mono m-ink resize-none outline-none" />
+              <button onClick={fwExecute} disabled={fwExecuting || !fwExecName.trim()}
+                className="m-accent-bg rounded-xl px-3 py-1.5 text-[12px] font-medium m-press m-focus">
+                {fwExecuting ? "…" : "Execute"}
+              </button>
+              {fwExecResult && (
+                <pre className="text-[12px] m-muted m-sunken m-bd rounded-xl p-2 overflow-auto max-h-32">{fwExecResult}</pre>
+              )}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* ── Tool Analytics ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowTa(!showTa)} className="flex items-center gap-2 w-full text-left">
+          {showTa ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <BarChart3 size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">Tool Analytics</span>
+        </button>
+        {showTa && (
+          <div className="mt-3 space-y-2">
+            {taLoading ? (
+              <Skeleton h={48} />
+            ) : toolAnalytics.length === 0 ? (
+              <div className="text-[12px] m-muted">No analytics data.</div>
+            ) : (
+              toolAnalytics.map((ta, i) => {
+                const pct = typeof ta.success_rate === "number" ? ta.success_rate : 100
+                return (
+                  <div key={i} className="flex items-center gap-3 text-[12px] m-sunken m-bd rounded-xl px-3 py-2">
+                    <span className="font-medium m-ink min-w-[100px]">{ta.name || ta.tool}</span>
+                    <div className="flex-1 h-2 rounded-full m-bd overflow-hidden">
+                      <div className="h-full" style={{ width: `${pct}%`, background: pct > 80 ? "#10B981" : pct > 50 ? "#F59E0B" : "#EF4444" }} />
+                    </div>
+                    <span className="m-mono m-muted w-12 text-right">{ta.call_count || 0}</span>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Plugin Tools ── */}
+      <Card className="p-4">
+        <button onClick={() => setShowPt(!showPt)} className="flex items-center gap-2 w-full text-left">
+          {showPt ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Package size={15} className="m-accent" />
+          <span className="text-sm font-semibold m-ink">Plugin Tools</span>
+        </button>
+        {showPt && (
+          <div className="mt-3 space-y-3">
+            {pluginToolsLoading ? (
+              <Skeleton h={48} />
+            ) : Object.keys(pluginTools).length === 0 ? (
+              <div className="text-[12px] m-muted">No plugins installed.</div>
+            ) : (
+              Object.entries(pluginTools).map(([pluginId, tools]) => (
+                <div key={pluginId} className="m-sunken m-bd rounded-xl p-3">
+                  <div className="text-[13px] font-medium m-ink mb-1">{pluginId}</div>
+                  {tools.length === 0 ? (
+                    <div className="text-[12px] m-muted">No tools.</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {tools.map((t, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                          <Wrench size={10} />{t.name || t.id || t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   )
 }

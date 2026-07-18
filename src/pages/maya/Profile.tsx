@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Moon, Sun, LogOut, Bell, ChevronRight, Trash2, Check } from "lucide-react"
+import { Moon, Sun, LogOut, Bell, ChevronRight, Trash2, Check, Send } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Card, Skeleton } from "@/components/maya/ui"
+import { useRole } from "@/hooks/useRole"
 import { useCostStore } from "@/store"
 import { useNotificationStore } from "@/store"
 import { meAPI, notificationAPI, authAPI, analyticsAPI } from "@/lib/api"
@@ -49,6 +50,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function Profile() {
   const { userQuery, analyticsQuery, unreadQuery } = useProfileData()
+  const { isAdmin } = useRole()
   const costSummary = useCostStore((s) => s.costSummary)
   const [theme, setThemeState] = useState<Theme>(getTheme())
   const [showAllNotifs, setShowAllNotifs] = useState(false)
@@ -163,6 +165,16 @@ export function Profile() {
           ) : (
             <div>
               <div className="flex items-center justify-end gap-2 px-4 pt-2">
+                {isAdmin && (
+                  <button onClick={async () => {
+                    try {
+                      await notificationAPI.send("me", "Test", "This is a test notification from Maya.", "info")
+                      toast.success("Test notification sent")
+                    } catch { toast.error("Failed to send") }
+                  }} className="text-[12px] m-accent m-press m-focus flex items-center gap-1">
+                    <Send size={12} /> Send test
+                  </button>
+                )}
                 <button onClick={markAllNotifs} className="text-[12px] m-accent m-press m-focus flex items-center gap-1">
                   <Check size={12} /> Mark all read
                 </button>

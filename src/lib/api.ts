@@ -246,6 +246,8 @@ export const workflowRunAPI = {
   runs: () => api.get("/workflows/runs"),
   state: (runId: string) => api.get(`/workflows/runs/${runId}`),
   cancel: (runId: string) => api.post(`/workflows/runs/${runId}/cancel`),
+  execute: (runId: string, approved = false) =>
+    api.post(`/workflows/runs/${runId}/execute`, { approved }),
 }
 
 // ── Autonomous Mode (Phase 7, flag-gated) ──────
@@ -363,6 +365,8 @@ export const notificationAPI = {
   list: (params?: { limit?: number }) => api.get("/notifications", { params }),
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
+  send: (userId: string, title: string, message: string, type = "info") =>
+    api.post("/notifications/send", { user_id: userId, title, message, type }),
 }
 
 
@@ -376,6 +380,10 @@ export const workflowDefAPI = {
   list: () => api.get("/workflows/defs"),
   get: (id: string) => api.get(`/workflows/defs/${id}`),
   create: (data: Record<string, unknown>) => api.post("/workflows/defs", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    api.put(`/workflows/defs/${id}`, data),
+  delete: (id: string) => api.delete(`/workflows/defs/${id}`),
+  run: (id: string) => api.post(`/workflows/defs/${id}/run`),
 }
 export const pluginCodeAPI = {
   install: (code: string, name?: string) => api.post("/plugins/install-code", { code, name }),
@@ -396,6 +404,10 @@ export const deviceAPI = {
   list: () => api.get("/device"),
   status: () => api.get("/device/status"),
   send: (data: Record<string, unknown>) => api.post("/device/send", data),
+  pairStart: (name: string) => api.post("/device/pair/start", { name }),
+  pairComplete: (code: string) => api.post("/device/pair/complete", { code }),
+  command: (deviceId: string, action: string, params?: Record<string, unknown>) =>
+    api.post("/device/command", { device_id: deviceId, action, params }),
 }
 export const promptAPI = {
   list: () => api.get("/prompts"),
@@ -407,6 +419,23 @@ export const workspaceAPI = {
   list: () => api.get("/workspaces"),
   create: (data: Record<string, unknown>) => api.post("/workspaces", data),
   delete: (id: string) => api.delete(`/workspaces/${id}`),
+  memoryList: (scope = "default") =>
+    api.get("/workspace/memory", { params: { scope } }),
+  memoryAdd: (scope: string, content: string, type = "general") =>
+    api.post("/workspace/memory", { scope, content, type }),
+  memoryDelete: (scope: string, id: string) =>
+    api.delete(`/workspace/memory/${encodeURIComponent(id)}`, { params: { scope } }),
+  memoryStats: (scope = "default") =>
+    api.get("/workspace/stats", { params: { scope } }),
+  // Legacy aliases for the old Workspaces page
+  search: (scope: string, q?: string, limit = 50) =>
+    api.get("/workspace/memory", { params: { scope, q, limit } }),
+  add: (scope: string, content: string) =>
+    api.post("/workspace/memory", { scope, content }),
+  remove: (scope: string, id: string) =>
+    api.delete(`/workspace/memory/${encodeURIComponent(id)}`, { params: { scope } }),
+  stats: (scope = "default") =>
+    api.get("/workspace/stats", { params: { scope } }),
 }
 export const hookAPI = {
   list: () => api.get("/hooks"),
@@ -414,5 +443,23 @@ export const hookAPI = {
   delete: (id: string) => api.delete(`/hooks/${id}`),
 }
 
+// ── Queue (admin task management) ──────────────
+export const queueAPI = {
+  submit: (goal: string) => api.post("/queue/submit", { goal }),
+  stats: () => api.get("/queue/stats"),
+  task: (id: string) => api.get(`/queue/task/${id}`),
+}
+
+// ── Sync (offline/device sync) ────────────────
+export const syncAPI = {
+  recent: (limit = 20) => api.get("/sync/recent", { params: { limit } }),
+  status: () => api.get("/sync/status"),
+}
+
+// ── Health (liveness / readiness probes) ──────
+export const healthAPI = {
+  live: () => api.get("/health/live"),
+  ready: () => api.get("/health/ready"),
+}
 
 // added helpers

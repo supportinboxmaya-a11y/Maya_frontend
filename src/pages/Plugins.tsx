@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, pluginCodeAPI } from '@/lib/api'
-import { Loader2, Power, Trash2, Puzzle, Plus, X, Code } from 'lucide-react'
+import { Loader2, Power, Trash2, Puzzle, Plus, X, Code, Wrench, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface LoadedPlugin {
@@ -21,6 +21,8 @@ export function Plugins() {
   const [plugins, setPlugins] = useState<LoadedPlugin[]>([])
   const [loading, setLoading] = useState(true)
   const [showInstall, setShowInstall] = useState(false)
+  const [visibleTools, setVisibleTools] = useState<Record<string, { name: string; description: string }[]>>({})
+  const [toolsLoading, setToolsLoading] = useState<Record<string, boolean>>({})
   const [installName, setInstallName] = useState('')
   const [installCode, setInstallCode] = useState(CODE_EXAMPLE)
   const [installing, setInstalling] = useState(false)
@@ -48,6 +50,17 @@ export function Plugins() {
       setPlugins(prev => prev.filter(p => p.name !== plugin.name))
       toast.success(`${plugin.name} deleted`)
     } catch { toast.error('Failed to delete plugin') }
+  }
+
+  const toggleTools = async (plugin: LoadedPlugin) => {
+    const key = plugin.name
+    if (visibleTools[key]) { setVisibleTools(p => { const n = { ...p }; delete n[key]; return n }); return }
+    setToolsLoading(p => ({ ...p, [key]: true }))
+    try {
+      const res: any = await pluginCodeAPI.tools(plugin.name)
+      setVisibleTools(p => ({ ...p, [key]: res?.tools || res || [] }))
+    } catch { toast.error('Failed to load tools') }
+    setToolsLoading(p => ({ ...p, [key]: false }))
   }
 
   const installFromCode = async () => {
@@ -88,9 +101,34 @@ export function Plugins() {
                   <div className="text-sm font-semibold text-white">{plugin.name}</div>
                   <div className="text-xs text-slate-500">v{plugin.version}</div>
                 </div>
-                {plugin.tools?.length > 0 && <span className="badge badge-default text-[10px]">{plugin.tools.length} tool{plugin.tools.length !== 1 && 's'}</span>}
+                <div className="flex items-center gap-2">
+                  {plugin.tools?.length > 0 && <span className="badge badge-default text-[10px]">{plugin.tools.length} tool{plugin.tools.length !== 1 && 's'}</span>}
+                  <button onClick={() => toggleTools(plugin)}
+                    className="p-1 rounded-md text-slate-500 hover:text-purple-400 transition-colors"
+                    title={visibleTools[plugin.name] ? 'Hide tools' : 'Show tools'}>
+                    {toolsLoading[plugin.name] ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> :
+                     visibleTools[plugin.name] ? <EyeOff className="w-3.5 h-3.5"/> : <Eye className="w-3.5 h-3.5"/>}
+                  </button>
+                </div>
               </div>
               {plugin.description && <div className="text-xs text-slate-400">{plugin.description}</div>}
+              {visibleTools[plugin.name] && (
+                <div className="space-y-1">
+                  {visibleTools[plugin.name].length === 0 ? (
+                    <div className="text-[10px] text-slate-500">No tools returned.</div>
+                  ) : (
+                    visibleTools[plugin.name].map((t, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-[#0f1117] border border-[#1e2130]">
+                        <Wrench className="w-3 h-3 text-purple-400 mt-0.5 shrink-0" />
+                        <div>
+                          <div className="text-xs text-slate-300 font-medium">{t.name || t.id || t}</div>
+                          {t.description && <div className="text-[10px] text-slate-500">{t.description}</div>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <button onClick={() => togglePlugin(plugin)}
                   className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${plugin.enabled ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>

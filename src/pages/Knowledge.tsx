@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ragAPI } from '@/lib/api'
-import { Loader2, Trash2, Plus, Search, Database, FileText, X } from 'lucide-react'
+import { Loader2, Trash2, Plus, Search, Database, FileText, X, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface RagDoc {
@@ -27,6 +27,8 @@ export function Knowledge() {
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newText, setNewText] = useState('')
+  const [ctxResults, setCtxResults] = useState<any[]>([])
+  const [showCtx, setShowCtx] = useState(false)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -34,6 +36,11 @@ export function Knowledge() {
       const [d, s]: any = await Promise.all([ragAPI.documents(), ragAPI.stats()])
       setDocs(d?.documents || [])
       setStats(s || null)
+      // also load recent context
+      try {
+        const ctx: any = await ragAPI.context("latest", 5)
+        setCtxResults(ctx?.results || ctx?.context || [])
+      } catch { /* no context */ }
     } catch { setDocs([]); setStats(null) }
     finally { setLoading(false) }
   }
@@ -94,6 +101,26 @@ export function Knowledge() {
               <div className="text-sm font-semibold text-white truncate">{v}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Recent Context */}
+      {ctxResults.length > 0 && (
+        <div>
+          <button onClick={() => setShowCtx(!showCtx)}
+            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white mb-1">
+            <BookOpen className="w-3.5 h-3.5"/>Recent Context ({ctxResults.length})
+          </button>
+          {showCtx && (
+            <div className="space-y-1">
+              {ctxResults.slice(0, 5).map((c, i) => (
+                <div key={i} className="card p-3">
+                  <div className="text-xs text-slate-300">{c.title || c.content?.slice(0, 100) || `Match ${i + 1}`}</div>
+                  {c.score != null && <div className="text-[10px] text-slate-500 mt-0.5">Score: {typeof c.score === "number" ? c.score.toFixed(3) : c.score}</div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

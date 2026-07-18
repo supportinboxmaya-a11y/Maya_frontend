@@ -35,6 +35,9 @@ export function OrgPanel() {
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [revokePending, setRevokePending] = useState<Record<string, boolean>>({})
 
+  // Roles
+  const [roles, setRoles] = useState<string[]>([])
+
   // Audit
   const [audit, setAudit] = useState<AuditEntry[]>([])
 
@@ -45,8 +48,8 @@ export function OrgPanel() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const [o, k, a, u] = await Promise.allSettled([
-        adminAPI.orgs(), adminAPI.apiKeys(), adminAPI.audit(), adminAPI.users(),
+      const [o, k, a, u, r] = await Promise.allSettled([
+        adminAPI.orgs(), adminAPI.apiKeys(), adminAPI.audit(), adminAPI.users(), adminAPI.roles(),
       ])
       if (o.status === "fulfilled") {
         const d = o.value as any
@@ -64,6 +67,10 @@ export function OrgPanel() {
         const d = u.value as any
         setUsersEnabled(d?.enabled !== false)
         setUsers(d?.users || [])
+      }
+      if (r.status === "fulfilled") {
+        const d = r.value as any
+        setRoles(d?.roles || d || [])
       }
     } catch {
       // ignore
@@ -198,6 +205,16 @@ export function OrgPanel() {
                             <div className="min-w-0">
                               <div className="text-sm font-medium m-ink truncate">{u.name || u.email}</div>
                               <div className="text-[11px] m-muted truncate">{u.email} · {u.role}</div>
+                            {roles.length > 0 && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {roles.map((r) => (
+                                  <span key={r} className="text-[10px] px-1.5 py-0.5 rounded-full" style={{
+                                    background: r === u.role ? "var(--accent-soft)" : "var(--sunken)",
+                                    color: r === u.role ? "var(--accent)" : "var(--muted)",
+                                  }}>{r}</span>
+                                ))}
+                              </div>
+                            )}
                             </div>
                           </div>
                           <button
