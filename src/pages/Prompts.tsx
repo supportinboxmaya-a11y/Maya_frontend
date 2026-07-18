@@ -32,7 +32,7 @@ export function Prompts() {
   const fetchLibrary = async () => {
     setLoading(true)
     try {
-      const res: any = await promptAPI.list(activeCategory, query)
+      const res: any = await promptAPI.list({ category: activeCategory, q: query })
       setPrompts(res?.prompts || [])
       setCategories(res?.categories || [])
     } catch { toast.error('Failed to load prompt library') }

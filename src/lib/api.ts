@@ -375,6 +375,8 @@ export const schedulerAPI = {
   list: () => api.get("/schedules"),
   create: (data: Record<string, unknown>) => api.post("/schedules", data),
   delete: (id: string) => api.delete(`/schedules/${id}`),
+  setEnabled: (id: string, enabled: boolean) =>
+    api.put(`/schedules/${id}/enabled`, { enabled }),
 }
 export const workflowDefAPI = {
   list: () => api.get("/workflows/defs"),
@@ -396,9 +398,10 @@ export const workspaceFilesAPI = {
 }
 export const projectAPI = {
   list: () => api.get("/projects"),
-  create: (data: Record<string, unknown>) => api.post("/projects", data),
+  create: (data: Record<string, unknown>): Promise<any> => api.post("/projects", data),
   get: (id: string) => api.get(`/projects/${id}`),
   delete: (id: string) => api.delete(`/projects/${id}`),
+  progress: (id: string) => api.get(`/projects/${id}/progress`),
 }
 export const deviceAPI = {
   list: () => api.get("/device"),
@@ -410,10 +413,13 @@ export const deviceAPI = {
     api.post("/device/command", { device_id: deviceId, action, params }),
 }
 export const promptAPI = {
-  list: () => api.get("/prompts"),
-  create: (data: Record<string, unknown>) => api.post("/prompts", data),
+  list: (params?: { category?: string; q?: string }) =>
+    api.get("/prompts", { params }),
+  create: (data: Record<string, unknown>): Promise<any> => api.post("/prompts", data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/prompts/${id}`, data),
   delete: (id: string) => api.delete(`/prompts/${id}`),
+  render: (id: string, values: Record<string, string>, run = false) =>
+    api.post(`/prompts/${id}/render`, { values, run }),
 }
 export const workspaceAPI = {
   list: () => api.get("/workspaces"),
@@ -441,6 +447,8 @@ export const hookAPI = {
   list: () => api.get("/hooks"),
   create: (data: Record<string, unknown>) => api.post("/hooks", data),
   delete: (id: string) => api.delete(`/hooks/${id}`),
+  setEnabled: (id: string, enabled: boolean) =>
+    api.put(`/hooks/${id}/enabled`, { enabled }),
 }
 
 // ── Queue (admin task management) ──────────────

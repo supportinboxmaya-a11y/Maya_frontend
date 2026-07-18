@@ -12,6 +12,18 @@ import { Tasks } from "@/pages/maya/Tasks"
 import { Activity } from "@/pages/maya/Activity"
 import { Profile } from "@/pages/maya/Profile"
 import { Control } from "@/pages/Control"
+import { Memory } from "@/pages/Memory"
+import { Knowledge } from "@/pages/Knowledge"
+import { Learning } from "@/pages/Learning"
+import { Workflow } from "@/pages/Workflow"
+import { Prompts } from "@/pages/Prompts"
+import { Voice } from "@/pages/Voice"
+import { Vision } from "@/pages/Vision"
+import { Analytics } from "@/pages/Analytics"
+import { Cost } from "@/pages/Cost"
+import { Security } from "@/pages/Security"
+import { Backup } from "@/pages/Backup"
+import { Integrations } from "@/pages/Integrations"
 import { RequireAdmin } from "@/components/auth/RequireAdmin"
 
 export function AppShell() {
@@ -122,6 +134,18 @@ export function AppShell() {
             <Route path="activity" element={<Activity />} />
             <Route path="profile" element={<Profile />} />
             <Route path="control/*" element={<RequireAdmin><Control /></RequireAdmin>} />
+            <Route path="memory" element={<Memory />} />
+            <Route path="knowledge" element={<Knowledge />} />
+            <Route path="learning" element={<Learning />} />
+            <Route path="workflow" element={<Workflow />} />
+            <Route path="prompts" element={<Prompts />} />
+            <Route path="voice" element={<Voice />} />
+            <Route path="vision" element={<Vision />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="cost" element={<Cost />} />
+            <Route path="security" element={<Security />} />
+            <Route path="backup" element={<Backup />} />
+            <Route path="integrations" element={<Integrations />} />
           </Routes>
         </main>
       </div>
