@@ -323,6 +323,23 @@ export const authAPI = {
   refresh: () => api.post("/auth/refresh"),
 }
 
+// ── Voice (transcribe audio to text) ───────────
+export const voiceAPI = {
+  transcribe: (blob: Blob) => {
+    const fd = new FormData()
+    fd.append("audio", blob, "recording.webm")
+    return api.post("/voice/transcribe", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }) as Promise<{ text: string }>
+  },
+}
+
+// ── Vision (analyze images) ────────────────────
+export const visionAPI = {
+  analyze: (imageBase64: string, prompt?: string) =>
+    api.post("/vision/analyze", { image: imageBase64, prompt }) as Promise<{ description: string; analysis: string }>,
+}
+
 // ── WebSocket ──────────────────────────────────
 export function createWebSocket(onMessage: (data: unknown) => void) {
   // Derive WS endpoint from the agent URL so production works without extra config
