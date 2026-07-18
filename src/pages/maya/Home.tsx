@@ -39,7 +39,6 @@ function TaskRow({ task, onClick }: { task: AgentTask; onClick: () => void }) {
         <div className="text-sm font-medium m-ink truncate">{t.goal || "Untitled"}</div>
         <div className="text-[12px] m-muted flex items-center gap-2">
           <span>{t.current_phase || t.status}</span>
-          {t.cost_usd !== undefined && <span>· ${t.cost_usd.toFixed(4)}</span>}
         </div>
       </div>
       <span className="text-[11px] m-faint shrink-0">{timeAgo(t.id)}</span>

@@ -20,9 +20,10 @@ function ToolChip({ name }: { name: string }) {
 
 interface TaskTimelineProps {
   task: AgentTask
+  admin?: boolean
 }
 
-export function TaskTimeline({ task }: TaskTimelineProps) {
+export function TaskTimeline({ task, admin }: TaskTimelineProps) {
   const steps = task.steps || []
 
   if (steps.length === 0) {
@@ -46,12 +47,12 @@ export function TaskTimeline({ task }: TaskTimelineProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium m-ink">{s.title || s.description || `Step ${s.step ?? i + 1}`}</span>
-                  {s.tool && <ToolChip name={s.tool} />}
+                  {admin && s.tool && <ToolChip name={s.tool} />}
                 </div>
                 {s.description && s.title && (
                   <div className="text-[12px] m-muted mt-0.5">{s.description}</div>
                 )}
-                {s.result && (
+                {admin && s.result && (
                   <div className="text-[12px] m-muted mt-0.5 m-mono truncate" style={{ whiteSpace: "pre-wrap" }}>
                     {String(s.result).slice(0, 240)}
                   </div>

@@ -5,6 +5,7 @@ import { Card, Skeleton } from "@/components/maya/ui"
 import { StatusDot } from "@/components/ui/StatusDot"
 import { TaskTimeline } from "@/components/live/TaskTimeline"
 import { useLiveStore } from "@/store/live"
+import { useRole } from "@/hooks/useRole"
 import { taskAPI } from "@/lib/api"
 import { timeAgo, formatCost } from "@/lib/utils"
 import type { AgentTask } from "@/lib/agentLive"
@@ -24,6 +25,7 @@ export function Tasks() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const liveTasks = useLiveStore((s) => s.tasks)
+  const { isAdmin } = useRole()
   const selectedId = searchParams.get("task")
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -58,9 +60,10 @@ export function Tasks() {
             <div className="text-[12px] m-muted flex items-center gap-2">
               <StatusDot status={selected.status === "running" ? "online" : selected.status === "failed" ? "error" : "offline"} />
               <span>{selected.status}</span>
-              {selected.provider_used && <><span>·</span><span>{selected.provider_used}</span></>}
-              {typeof selected.cost_usd === "number" && <><span>·</span><span>{formatCost(selected.cost_usd)}</span></>}
-              {typeof selected.tokens_used === "number" && <><span>·</span><span>{selected.tokens_used.toLocaleString()} tokens</span></>}
+              {selected.current_phase && <><span>·</span><span>{selected.current_phase}</span></>}
+              {isAdmin && selected.provider_used && <><span>·</span><span>{selected.provider_used}</span></>}
+              {isAdmin && typeof selected.cost_usd === "number" && <><span>·</span><span>{formatCost(selected.cost_usd)}</span></>}
+              {isAdmin && typeof selected.tokens_used === "number" && <><span>·</span><span>{selected.tokens_used.toLocaleString()} tokens</span></>}
             </div>
           </div>
           <button
@@ -78,7 +81,7 @@ export function Tasks() {
           </div>
         )}
 
-        <TaskTimeline task={selected} />
+        <TaskTimeline task={selected} admin={isAdmin} />
       </div>
     )
   }
@@ -137,7 +140,7 @@ export function Tasks() {
                   <span>{task.status}</span>
                   {task.current_phase && <><span>·</span><span>{task.current_phase}</span></>}
                   {task.steps && <><span>·</span><span>{task.steps.length} step{task.steps.length !== 1 ? "s" : ""}</span></>}
-                  {typeof task.cost_usd === "number" && <><span>·</span><span>{formatCost(task.cost_usd)}</span></>}
+                  {isAdmin && typeof task.cost_usd === "number" && <><span>·</span><span>{formatCost(task.cost_usd)}</span></>}
                 </div>
               </div>
               <span className="text-[11px] m-faint shrink-0">{timeAgo(task.id)}</span>

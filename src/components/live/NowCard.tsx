@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { XCircle, Clock, Zap, Wrench } from "lucide-react"
+import { XCircle, Clock } from "lucide-react"
 import { useLiveStore } from "@/store/live"
 import { Card } from "@/components/maya/ui"
 import { Orb } from "@/components/maya/Orb"
@@ -34,6 +34,7 @@ export function NowCard() {
   useEffect(() => { setMounted(true) }, [])
 
   const task = currentTaskId ? tasks[currentTaskId] : null
+  const stepCount = task?.steps?.length ?? 0
 
   if (!task) {
     return (
@@ -48,8 +49,6 @@ export function NowCard() {
       </Card>
     )
   }
-
-  const lastStep = task.steps?.[task.steps.length - 1]
 
   const handleCancel = async () => {
     setCancelling(true)
@@ -68,27 +67,15 @@ export function NowCard() {
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap text-sm m-muted">
             {task.current_phase && (
-              <span className="inline-flex items-center gap-1">
-                <Wrench size={13} />
-                {task.current_phase}
-              </span>
+              <span>{task.current_phase}</span>
             )}
-            {lastStep?.tool && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
-                <Wrench size={11} />
-                {lastStep.tool}
-              </span>
+            {stepCount > 0 && (
+              <span>step {stepCount}</span>
             )}
             <span className="inline-flex items-center gap-1">
               <Clock size={13} className="m-accent" />
               {elapsed}
             </span>
-            {typeof task.cost_usd === "number" && (
-              <span className="inline-flex items-center gap-1">
-                <Zap size={13} className="m-accent" />
-                ${task.cost_usd.toFixed(4)}
-              </span>
-            )}
           </div>
         </div>
         <button

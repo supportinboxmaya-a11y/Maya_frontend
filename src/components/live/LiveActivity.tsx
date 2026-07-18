@@ -1,5 +1,5 @@
 import { useLiveStore, type FeedEvent } from "@/store/live"
-import { Check, X, Clock, Wrench, Activity as ActivityIcon } from "lucide-react"
+import { Check, X, Clock, Activity as ActivityIcon } from "lucide-react"
 import { Card } from "@/components/maya/ui"
 import { StatusDot } from "@/components/ui/StatusDot"
 
@@ -43,9 +43,6 @@ function EventRow({ e }: { e: FeedEvent }) {
           <Clock size={11} />
           <span>{formatTime(e.ts)}</span>
           {e.phase && <><span>·</span><span>{e.phase}</span></>}
-          {e.tool && (
-            <><span>·</span><span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}><Wrench size={10} />{e.tool}</span></>
-          )}
         </div>
       </div>
     </div>
