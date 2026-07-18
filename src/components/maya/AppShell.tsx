@@ -4,6 +4,7 @@ import { PRIMARY_NAV, ADVANCED, ALL_DEST, ADMIN_ONLY } from "@/config/nav"
 import { getTheme, setTheme as persist, type Theme } from "@/lib/theme"
 import { useRole } from "@/hooks/useRole"
 import { Orb } from "./Orb"
+import { LiveConnection } from "@/components/live/LiveConnection"
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { Home } from "@/pages/maya/Home"
 import { Chat } from "@/pages/maya/Chat"
@@ -46,6 +47,7 @@ export function AppShell() {
   const primary = isAdmin ? PRIMARY_NAV : PRIMARY_NAV.filter((n) => n.id !== "tools")
 
   return (<div className="maya-app" data-theme={theme} style={{ height: "100dvh", display: "flex", overflow: "hidden" }}>
+    <LiveConnection />
     <aside className="hidden md:flex flex-col m-bd-r m-surface" style={{ width: 256, flexShrink: 0 }}>
       <div className="flex items-center gap-2.5 px-5" style={{ height: 64 }}><Orb size={26} /><span className="m-display text-lg font-semibold m-ink">Maya</span></div>
       <nav className="flex-1 overflow-y-auto m-hide-sb px-3 space-y-1">
