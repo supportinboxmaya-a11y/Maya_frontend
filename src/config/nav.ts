@@ -1,4 +1,4 @@
-import { Home, MessageSquare, ListTodo, Activity, User, Brain, Database, Users, Sparkles, Workflow, Puzzle, FileText, Volume2, Eye, BarChart3, Zap, Shield, HardDrive, Boxes } from "lucide-react"
+import { Home, MessageSquare, ListTodo, Activity, User, Brain, Database, Users, Sparkles, Workflow, Puzzle, FileText, Volume2, Eye, BarChart3, Zap, Shield, HardDrive, Boxes, Gauge } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 export interface Dest { id: string; label: string; icon: LucideIcon; path: string }
 export const PRIMARY_NAV: Dest[] = [
@@ -7,6 +7,7 @@ export const PRIMARY_NAV: Dest[] = [
   { id:"chat",     label:"Ask",      icon:MessageSquare, path:"/chat" },
   { id:"activity", label:"Activity", icon:Activity,      path:"/activity" },
   { id:"profile",  label:"Profile",  icon:User,          path:"/profile" },
+  { id:"control",  label:"Control",  icon:Gauge,         path:"/control" },
 ]
 export const ADVANCED: { g: string; items: Dest[] }[] = [
   { g:"Intelligence", items:[{ id:"memory",label:"Memory",icon:Brain,path:"/memory" },{ id:"knowledge",label:"Knowledge",icon:Database,path:"/knowledge" },{ id:"agents",label:"Agents",icon:Users,path:"/agents" },{ id:"learning",label:"Learning",icon:Sparkles,path:"/learning" }] },
@@ -15,5 +16,5 @@ export const ADVANCED: { g: string; items: Dest[] }[] = [
   { g:"Insights", items:[{ id:"analytics",label:"Analytics",icon:BarChart3,path:"/analytics" },{ id:"cost",label:"Cost",icon:Zap,path:"/cost" }] },
   { g:"Enterprise", items:[{ id:"team",label:"Team",icon:Users,path:"/team" },{ id:"security",label:"Security",icon:Shield,path:"/security" },{ id:"backup",label:"Backup",icon:HardDrive,path:"/backup" },{ id:"integrations",label:"Integrations",icon:Boxes,path:"/integrations" },{ id:"admin",label:"Admin",icon:Shield,path:"/admin" }] },
 ]
-export const ADMIN_ONLY = new Set<string>(["tools", ...ADVANCED.flatMap((s) => s.items.map((i) => i.id))])
+export const ADMIN_ONLY = new Set<string>(["control", "tools", ...ADVANCED.flatMap((s) => s.items.map((i) => i.id))])
 export const ALL_DEST: (Dest & { group: string })[] = [...PRIMARY_NAV.map((n) => ({ ...n, group: "Main" })), ...ADVANCED.flatMap((s) => s.items.map((i) => ({ ...i, group: s.g })))]
